@@ -2,7 +2,18 @@
 
 Proyecto experimental para aproximar la iluminación y la niebla históricas de Minecraft Beta 1.7.3 en un entorno moderno con shaders.
 
-## Versiones disponibles
+## Estado actual: v0.6 — Differential Regression
+
+La versión más reciente del proyecto está integrada en la rama principal `main`.
+
+**v0.6 añade pruebas diferenciales y documentación; no es un nuevo paquete de shader descargable.** El shader experimental empaquetado más reciente sigue siendo v0.5.
+
+- [Ver las pruebas diferenciales v0.6](Beta173-Lighting/tests/test_beta173_differential.py)
+- [Ver el README técnico de Beta173-Lighting](Beta173-Lighting/README.md)
+
+Las pruebas comparan transcripciones en Python de las fórmulas históricas de brillo, ángulo celeste, reducción de luz del cielo y brillo estelar con los resultados esperados. No ejecutan el código Java original, no compilan GLSL ni garantizan equivalencia visual dentro del juego.
+
+## Versiones descargables del shader
 
 ### v0.5 — Regression
 
@@ -22,22 +33,23 @@ Introduce el perfil histórico estricto, niveles de luz discretos y constantes d
 - [v0.2](Beta173-Lighting-0.2.zip)
 - [v0.1](Beta173-Lighting-0.1.zip)
 
-## Pruebas
+## Ejecutar las pruebas
 
-Desde la raíz del repositorio, ejecuta:
+Desde la raíz del repositorio:
 
 ```bash
 python -m unittest discover -s Beta173-Lighting/tests -v
 ```
 
-Las pruebas comprueban propiedades matemáticas y constantes del shader. No sustituyen la compilación GLSL ni las pruebas dentro del juego.
+Las pruebas matemáticas no sustituyen la compilación GLSL ni las pruebas dentro del juego.
 
 ## Limitaciones conocidas
 
 - Algunas características del renderizado original se aproximan mediante el sistema de shaders moderno.
 - La temperatura del bioma y determinados comportamientos del cielo y la niebla todavía tienen aproximaciones.
 - La compatibilidad final depende del entorno de shaders utilizado.
+- La interpolación por partial ticks y la mezcla cielo/niebla dependiente de la distancia de renderizado siguen siendo diferencias conocidas.
 
-## Estado del proyecto
+## Objetivo del proyecto
 
-Proyecto en desarrollo. El objetivo es priorizar la fidelidad histórica sobre los efectos visuales modernos.
+Priorizar la fidelidad histórica de Minecraft Beta 1.7.3 sobre los efectos visuales modernos.
