@@ -28,6 +28,12 @@ jobs:
           zip -r ../Beta173-Lighting-0.7.zip shaders
           unzip -l ../Beta173-Lighting-0.7.zip
 
+      - name: Publish ZIP on repository homepage
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Publish packaged v0.7 ZIP on repository homepage"
+          file_pattern: Beta173-Lighting-0.7.zip
+
       - name: Publish v0.7 release
         uses: softprops/action-gh-release@v2
         with:
