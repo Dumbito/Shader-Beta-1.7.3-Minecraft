@@ -26,7 +26,8 @@
     #error BETA_RENDER_DISTANCE debe ser 0, 1, 2 o 3
 #endif
 
-// Aproximacion neutral: falta recuperar la temperatura real del bioma.
+// Fallback neutral solo mientras no se genere el campo climático para la semilla real.
+// Ejecuta tools/generate_climate_seed.py --seed <valor-de-/seed> para activar el port.
 #define BETA_SKY_TEMPERATURE 0.5
 
 // ---------------------------------------------------------------------------

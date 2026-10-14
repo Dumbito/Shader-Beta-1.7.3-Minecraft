@@ -3,6 +3,10 @@
 // (https://github.com/jacobo-mc/mc_b1.7.3_release)
 
 #include "/lib/config.glsl"
+#include "/lib/climate_seed.glsl"
+#include "/lib/climate_noise.glsl"
+
+uniform vec3 cameraPosition;
 
 uniform int worldTime;
 uniform float rainStrength;
@@ -87,9 +91,25 @@ vec3 beta173Hsb(float h, float s, float b) {
     return b * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), s);
 }
 
+// Temperatura climática de Beta, basada en la semilla y las coordenadas X/Z del jugador.
+// En el pase del cielo se calcula en el vertex shader y se interpola como flat para no
+// recalcular el ruido cuatro-octavas en cada fragmento de pantalla.
+float beta173SkyClimateTemperature() {
+#if BETA_CLIMATE_SEED_CONFIGURED
+#ifdef BETA_CLIMATE_USE_VARYING
+    return beta173ClimateTemperatureVarying;
+#else
+    vec2 playerXZ = floor(cameraPosition.xz + vec2(BETA_CLIMATE_ORIGIN_X, BETA_CLIMATE_ORIGIN_Z));
+    return beta173ClimateTemperature(playerXZ);
+#endif
+#else
+    return BETA_SKY_TEMPERATURE;
+#endif
+}
+
 // World.getSkyColor + BiomeGenBase.getSkyColorByTemp
 vec3 beta173SkyColor() {
-    float t = clamp(BETA_SKY_TEMPERATURE / 3.0, -1.0, 1.0);
+    float t = clamp(beta173SkyClimateTemperature() / 3.0, -1.0, 1.0);
     vec3 col = beta173Hsb(0.62222224 - t * 0.05, 0.5 + t * 0.1, 1.0) * beta173DayFactor();
 
     float rain = beta173Rain();
