@@ -1,40 +1,35 @@
-# Beta173 Lighting
+# Beta173 Lighting — perfil histórico v0.4
 
-Experimental Iris shaderpack that ports the lighting, sky and fog of Minecraft Beta 1.7.3 to modern Minecraft (tested target: 26.3).
+Shaderpack experimental para Iris que reconstruye en Minecraft moderno las fórmulas de iluminación, ciclo celeste y niebla de Minecraft Beta 1.7.3. La prioridad de esta rama es la fidelidad histórica, no conservar la apariencia del renderizador moderno.
 
-## Reference
+## Fuente de referencia
 
-The formulas come from the reconstructed Beta 1.7.3 source, used for reference only:
-https://github.com/jacobo-mc/mc_b1.7.3_release
+Código fuente reconstruido de Beta 1.7.3: https://github.com/jacobo-mc/mc_b1.7.3_release
 
-Ported (not copied) from `WorldProvider`, `WorldProviderHell`, `World`, `EntityRenderer` and `RenderGlobal`.
+Funciones de referencia: `WorldProvider`, `WorldProviderHell`, `World`, `EntityRenderer` y `RenderGlobal`.
 
-## Version 0.3
-- Thunder attenuation of sky light (`World.calculateSkylightSubtracted`).
-- Minimum brightness 0.1 in dimensions without sky light (`WorldProviderHell`), 0.05 in the Overworld.
-- Continuous light level instead of per-fragment rounding, so Smooth Lighting no longer shows steps.
-- Beta fog: linear (starts at 25% of the distance) in air, exponential in water and lava, with Beta fog colors by time of day, rain and thunder.
-- Beta sky: flat sky color that blends into the fog color toward the horizon, dark disc below it, star brightness. Sunrise/sunset fan, sun, moon and clouds stay as the game draws them.
+## Perfil estricto
 
-## Version 0.2
-- Added gbuffers_textured_lit: entities, held items, dropped items and block entities use the same Beta 1.7.3 lighting as terrain (Iris falls back to this program).
-- Added gbuffers_armor_glint: enchantment glint is drawn unlit and without alpha discard.
+- Niveles de luz discretos 0–15; no usar interpolación continua para simular Smooth Lighting moderno.
+- Curva histórica de la tabla de brillo: ambiente 0.05 en Overworld y 0.1 en dimensiones sin luz de cielo.
+- Curva de ángulo celeste basada en el ciclo de 24 000 ticks y la interpolación cosenoidal de Beta.
+- Atenuación del cielo por lluvia y tormenta, según la fórmula de `World.calculateSkylightSubtracted`.
+- Cálculo aproximado del color de cielo y niebla y brillo de estrellas a partir de las fórmulas históricas.
+- Niebla de referencia a 256 bloques, equivalente al ajuste Far de Beta; no equivale necesariamente al far plane configurado en Minecraft moderno.
 
-## Version 0.1
-- Historical brightness table.
-- Historical celestial-angle interpolation.
-- Approximate sky attenuation by time and rain.
-- Maximum of attenuated sky light and block light.
+## Límites conocidos — no confundir aproximación con port completo
 
-## Options
+- Iris solo expone el tiempo del mundo como un valor entero en este shader; no se reproduce la interpolación de partial ticks de forma idéntica.
+- El lightmap de Minecraft moderno no representa necesariamente los mismos valores que los niveles de luz de Beta. Redondear a 0–15 reduce la diferencia, pero no sustituye la propagación de luz original.
+- La temperatura del bioma del cielo está fijada en 0.5 porque esta rama todavía no recibe la temperatura histórica del bioma de forma fiable.
+- El cielo original también incluye geometría y estados de renderizado del juego: amanecer/atardecer, sol, fases lunares, nubes y destello de relámpago no quedan reproducidos íntegramente por el shader.
+- El renderizado de Nether/End y sus nieblas requiere tratamiento específico por dimensión; no se debe asumir equivalencia completa.
+- Un shaderpack no puede reemplazar la propagación de iluminación que Minecraft calcula en CPU. Para fidelidad total de iluminación sería necesario un mod de renderizado y/o lógica del motor.
 
-Edit `shaders/lib/config.glsl`. Each feature can be turned off by commenting its `#define` line:
-`BETA_THUNDER`, `BETA_NETHER_AMBIENT`, `BETA_SMOOTH`, `BETA_FOG`.
-`BETA_FOG_END` sets the fog distance in blocks (keep it at or below your render distance).
-To go back to the vanilla sky, delete `gbuffers_skybasic.vsh` and `gbuffers_skybasic.fsh`.
+## Opciones
 
-## Limitations
-- A shaderpack cannot replace Minecraft CPU-side light propagation.
-- Modern lightmap coordinates may not map exactly to Beta 1.7.3 levels.
-- Not implemented: Nether/End fog, lightning flash, biome-dependent sky tint (a fixed temperature is used), cloud height and color, moon phases, particles beyond the shared lit program.
-- In-game testing is required.
+Editar `shaders/lib/config.glsl`. Las opciones activas corresponden al perfil histórico. `BETA_FOG_END` y `BETA_FOG_SKY_BLEND` están fijados a los valores de referencia de Beta Far; modificarlos deja de ser el perfil histórico estricto.
+
+## Estado
+
+Esta rama es una etapa de portado, no una declaración de equivalencia visual completa. No se afirma fidelidad total sin comparar las fórmulas y el comportamiento del juego en condiciones controladas.
