@@ -23,8 +23,8 @@ void main() {
     if (renderStage == MC_RENDER_STAGE_STARS) {
         // Beta: glColor4f(b, b, b, b) con b = brillo de estrellas * (1 - lluvia)
         float b = beta173StarBrightness() * (1.0 - beta173Rain());
-        // Evita multiplicar el brillo de las estrellas otra vez por el alpha del fragmento.
-        fragColor = vec4(vec3(b), 1.0);
+        // Replica RenderGlobal de Beta: glColor4f(b, b, b, b).
+        fragColor = vec4(vec3(b), b);
         return;
     }
 #endif
