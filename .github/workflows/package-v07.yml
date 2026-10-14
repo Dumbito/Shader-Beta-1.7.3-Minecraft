@@ -1,0 +1,45 @@
+name: Package Beta173 Lighting v0.7
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "Beta173-Lighting/**"
+      - "README.md"
+      - ".github/workflows/package-v07.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Python regression tests
+        run: python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+
+      - name: Build shaderpack ZIP
+        run: |
+          cd Beta173-Lighting
+          zip -r ../Beta173-Lighting-0.7.zip shaders
+          unzip -l ../Beta173-Lighting-0.7.zip
+
+      - name: Publish v0.7 release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.7
+          name: Beta173 Lighting v0.7 - Sky, Stars & Clouds
+          body: |
+            Beta173 Lighting v0.7.
+
+            - Adds Iris properties requesting stars and fancy clouds.
+            - Preserves the v0.6 historical fog profiles and block-lighting formulas.
+            - Includes the shaderpack ZIP with shaders/ at archive root.
+
+            Note: stars and clouds still require in-game verification with the target Iris/Minecraft version.
+          files: Beta173-Lighting-0.7.zip
+          fail_on_unmatched_files: true
