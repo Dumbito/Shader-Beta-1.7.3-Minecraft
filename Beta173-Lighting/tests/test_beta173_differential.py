@@ -62,6 +62,11 @@ def java_star_brightness(world_time: int) -> float:
 
 
 # Python mirrors of the relevant v0.5 GLSL functions.
+def glsl_brightness(level: int, ambient: float = 0.05) -> float:
+    inverted = 1.0 - level / 15.0
+    return (1.0 - inverted) / (inverted * 3.0 + 1.0) * (1.0 - ambient) + ambient
+
+
 def glsl_celestial_angle(world_time: int) -> float:
     angle = (world_time % 24000) / 24000.0 - 0.25
     if angle < 0.0:
@@ -96,7 +101,7 @@ class Beta173DifferentialTests(unittest.TestCase):
             for level in range(16):
                 with self.subTest(ambient=ambient, level=level):
                     self.assertAlmostEqual(
-                        java_brightness(level, ambient),
+                        glsl_brightness(level, ambient),
                         java_brightness(level, ambient),
                         places=12,
                     )
