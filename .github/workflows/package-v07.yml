@@ -1,4 +1,4 @@
-name: Package Beta173 Lighting v0.7.1
+name: Package Beta173 Lighting v0.7.2
 
 on:
   workflow_dispatch:
@@ -6,7 +6,6 @@ on:
     branches: [main]
     paths:
       - "Beta173-Lighting/**"
-      - "README.md"
       - ".github/workflows/package-v07.yml"
 
 permissions:
@@ -25,28 +24,23 @@ jobs:
       - name: Build shaderpack ZIP
         run: |
           cd Beta173-Lighting
-          zip -r ../Beta173-Lighting-0.7.1.zip shaders
-          unzip -l ../Beta173-Lighting-0.7.1.zip
+          zip -r ../Beta173-Lighting-0.7.2.zip shaders
+          unzip -t ../Beta173-Lighting-0.7.2.zip
+          unzip -l ../Beta173-Lighting-0.7.2.zip
 
-      - name: Publish ZIP on repository homepage
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Publish packaged v0.7.1 ZIP"
-          file_pattern: Beta173-Lighting-0.7.1.zip
-
-      - name: Publish v0.7.1 release
+      - name: Publish v0.7.2 release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.7.1
-          name: Beta173 Lighting v0.7.1 - Cloud & Star Fix
+          tag_name: v0.7.2
+          name: Beta173 Lighting v0.7.2 - Beta Cloud Cycle & Stars
           body: |
-            Beta173 Lighting v0.7.1 — corrective release for the v0.7 sky pass.
+            Beta173 Lighting v0.7.2 — corrects two behaviors against the Minecraft Beta 1.7.3 source.
 
-            - Adds an explicit Iris CLOUDS pass-through shader to preserve vanilla cloud geometry, vertex color, and alpha.
-            - Prevents star brightness from being multiplied a second time by fragment alpha.
-            - Keeps the existing Beta 1.7.3 sky, fog, and block-lighting implementation.
+            - Ports the historical World.drawClouds color response for daylight, rain, and weighted thunder.
+            - Restores the original RenderGlobal star RGBA output.
+            - Keeps cloud geometry and alpha from Iris' CLOUDS pass.
             - The ZIP contains shaders/ at archive root.
 
-            Compatibility note: cloud rendering is affected by Iris/Sodium behavior that varies by Minecraft version. This build requires in-game verification on Minecraft 26.3 with Iris 1.11.7; no claim of a tested runtime fix is made until verified.
-          files: Beta173-Lighting-0.7.1.zip
+            Validation: Python regression tests and ZIP integrity are checked automatically. Visual rendering still needs confirmation in Minecraft 26.3 with Iris 1.11.7; the CI job does not launch Minecraft or compile GLSL.
+          files: Beta173-Lighting-0.7.2.zip
           fail_on_unmatched_files: true
