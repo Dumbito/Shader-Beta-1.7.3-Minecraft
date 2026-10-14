@@ -2,16 +2,17 @@
 
 Proyecto experimental para reconstruir el aspecto de Minecraft Beta 1.7.3 en Minecraft moderno mediante Iris, priorizando la iluminación por niveles, la niebla histórica y el cielo clásico.
 
-## Última versión: v0.7.1 — Cloud & Star Fix
+## Última versión: v0.7.2 — Beta Cloud Cycle & Stars
 
-**[⬇ Descargar Beta173-Lighting v0.7.1 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7.1/Beta173-Lighting-0.7.1.zip)**
+**[⬇ Descargar Beta173-Lighting v0.7.2 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7.2/Beta173-Lighting-0.7.2.zip)**
 
-[Ver página del release v0.7.1 y sus detalles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.1).
+[Ver página del release v0.7.2 y sus detalles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2).
 
-### Cambios de v0.7.1
+### Cambios de v0.7.2
 
-- Añade shaders explícitos `gbuffers_clouds.vsh` y `gbuffers_clouds.fsh` para procesar las nubes mediante la etapa CLOUDS de Iris, conservando color y alfa de vértice.
-- Ajusta la salida del brillo de las estrellas para evitar una reducción adicional por el canal alfa.
+- Replica en `gbuffers_clouds.fsh` la fórmula de `World.drawClouds` de Beta 1.7.3: oscurecimiento nocturno y respuesta al clima/tormenta.
+- Restaura la salida RGBA original de estrellas de `RenderGlobal` (`glColor4f(b, b, b, b)`).
+- Conserva la geometría y el alfa del pase de nubes de Iris.
 - Mantiene la configuración de Iris para solicitar estrellas, nubes fancy, cielo, sol y luna.
 - Conserva los perfiles históricos de niebla y las fórmulas de iluminación de las versiones anteriores.
 
@@ -19,7 +20,7 @@ Proyecto experimental para reconstruir el aspecto de Minecraft Beta 1.7.3 en Min
 
 ### Instalación
 
-1. Descarga `Beta173-Lighting-0.7.1.zip) desde el enlace directo de arriba.
+1. Descarga `Beta173-Lighting-0.7.2.zip) desde el enlace directo de arriba.
 2. Copia el ZIP sin descomprimir en `shaderpacks` de tu instancia de Minecraft.
 3. Inicia Minecraft con Iris.
 4. En **Opciones → Ajustes de vídeo → Shader Packs**, selecciona **Beta173-Lighting-0.7.1**.
@@ -57,7 +58,7 @@ La suite existente contiene 19 tests de Python. Las pruebas automatizadas y la v
 
 ### Historial
 
-- **v0.7.1 — Cloud & Star Fix:** añade un pase explícito para nubes y ajusta la salida de brillo de las estrellas; pendiente de confirmación visual en el juego.
+- **v0.7.2 — Beta Cloud Cycle & Stars:** aplica el ciclo de color original de nubes y restaura la salida RGBA original de las estrellas; pendiente de confirmación visual en el juego.
 - **[v0.7 — Sky, Stars & Clouds](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7):** configuración inicial de Iris para estrellas y nubes.
 - [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip): perfiles de niebla históricos.
 - [v0.5 — Regression](Beta173-Lighting-0.5.zip)
