@@ -84,6 +84,12 @@ class GeneratedAssetTests(unittest.TestCase):
         shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
         self.assertIn("1023 - (octave * 256 + (z & 255))", shader)
 
+    def test_shader_sampler_and_gradient_function_use_distinct_identifiers(self):
+        shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
+        self.assertIn("uniform sampler2D beta173ClimateGradient;", shader)
+        self.assertIn("vec2 beta173ClimateGradientVector(int index)", shader)
+        self.assertIn("beta173ClimateGradientVector(gradientIndex)", shader)
+
     def test_generates_seed_specific_png_and_glsl_offsets(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "shaders"

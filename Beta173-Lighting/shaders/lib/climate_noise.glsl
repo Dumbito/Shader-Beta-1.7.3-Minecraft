@@ -21,7 +21,7 @@ int beta173ClimateGradientIndex(int x, int z, int octave) {
     return int(floor(encoded * 255.0 + 0.5));
 }
 
-vec2 beta173ClimateGradient(int index) {
+vec2 beta173ClimateGradientVector(int index) {
     // Primeras dos componentes de los 12 gradientes usados por NoiseGenerator2.
     if (index == 0) return vec2( 1.0,  1.0);
     if (index == 1) return vec2(-1.0,  1.0);
@@ -41,7 +41,7 @@ float beta173ClimateCorner(vec2 p, int gradientIndex) {
     float attenuation = 0.5 - dot(p, p);
     if (attenuation < 0.0) return 0.0;
     attenuation *= attenuation;
-    return attenuation * attenuation * dot(beta173ClimateGradient(gradientIndex), p);
+    return attenuation * attenuation * dot(beta173ClimateGradientVector(gradientIndex), p);
 }
 
 float beta173ClimateSimplex(vec2 point, int octave) {
