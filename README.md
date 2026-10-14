@@ -1,3 +1,11 @@
+## Experimental development build — not an official release
+
+An unnumbered development package is available for testing experimental lighting and fog changes. It is separate from the numbered releases and does not replace v0.5 as the latest numbered shader pack.
+
+**[Download Beta173-Lighting development build](Beta173-Lighting-dev.zip)**
+
+This build enables `BETA_SMOOTH` and uses an experimental fog end distance of 192 blocks. The GLSL sources pass standalone syntax validation after recursive include expansion, but in-game appearance and Iris compatibility still require testing. This package is not v0.6 and is not an official release.
+
 # Beta173 Lighting — Minecraft Beta 1.7.3
 
 Proyecto experimental para aproximar la iluminación y la niebla históricas de Minecraft Beta 1.7.3 en un entorno moderno con shaders.

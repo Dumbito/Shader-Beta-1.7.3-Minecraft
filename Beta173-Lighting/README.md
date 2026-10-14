@@ -1,3 +1,11 @@
+## Experimental development package — unnumbered
+
+The repository root contains `Beta173-Lighting-dev.zip`, a separate test package built from the current shader programs and experimental versions of `shaders/lib/beta173.glsl` and `shaders/lib/config.glsl`.
+
+Experimental settings include `BETA_SMOOTH`, `BETA_FOG_END 192.0`, and `BETA_FOG_SKY_BLEND 0.2929`. These settings differ from the strict historical profile described below and must not be treated as the official numbered release.
+
+The package is not v0.6. Standalone GLSL syntax validation passes after recursive include expansion; visual behavior and compatibility must still be tested in Minecraft with Iris. The existing v0.5 remains the latest numbered shader release.
+
 # Beta173 Lighting — perfil histórico v0.5
 
 Shaderpack experimental para Iris que reconstruye en Minecraft moderno las fórmulas de iluminación, ciclo celeste y niebla de Minecraft Beta 1.7.3. La prioridad de esta rama es la fidelidad histórica, no conservar la apariencia del renderizador moderno.
