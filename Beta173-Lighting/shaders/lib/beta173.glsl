@@ -64,12 +64,10 @@ float beta173Brightness(float level) {
 
 // Nivel de luz efectivo: max(luz de bloque, luz de cielo - restado)
 float beta173LightLevel(vec2 lm) {
-    float block = clamp(lm.x, 0.0, 1.0) * 15.0;
-    float sky = clamp(lm.y, 0.0, 1.0) * 15.0;
-#ifndef BETA_SMOOTH
-    block = floor(block + 0.5);
-    sky = floor(sky + 0.5);
-#endif
+    // Beta 1.7.3 trabaja con niveles enteros 0..15. No interpolar niveles:
+    // el lightmap moderno solo se usa como entrada aproximada para recuperar esos niveles.
+    float block = floor(clamp(lm.x, 0.0, 1.0) * 15.0 + 0.5);
+    float sky = floor(clamp(lm.y, 0.0, 1.0) * 15.0 + 0.5);
     return max(block, max(0.0, sky - beta173SkySubtracted()));
 }
 
