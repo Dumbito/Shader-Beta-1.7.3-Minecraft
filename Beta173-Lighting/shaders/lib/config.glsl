@@ -28,3 +28,45 @@
 
 // Aproximacion neutral: falta recuperar la temperatura real del bioma.
 #define BETA_SKY_TEMPERATURE 0.5
+
+// ---------------------------------------------------------------------------
+// Estrellas, nubes y diagnostico (v0.8)
+// ---------------------------------------------------------------------------
+
+// Estrellas de Beta dibujadas por este shader dentro del cielo (RenderGlobal.renderStars:
+// java.util.Random(10842), 1500 intentos -> 780 estrellas, radio 100, mismo tamano y rotacion).
+// No dependen del pase de estrellas del motor, que se descarta. Comenta la linea para volver
+// al pase del motor.
+#define BETA_STAR_FIELD
+
+// Color de las nubes:
+//   0 = color y sombreado de Beta (World.drawClouds + caras 1.0 / 0.7 / 0.9 / 0.8). Ignora el
+//       color del motor, asi que no puede haber oscurecimiento doble.
+//   1 = solo el color que da el motor, sin tocarlo.
+//   2 = comportamiento de v0.7.2: el color de Beta se multiplica sobre el del motor.
+#define BETA_CLOUD_COLOR_MODE 0
+
+// Altura de las nubes. Beta: WorldProvider.getCloudHeight() = 108, mas 0.33 en el render.
+// BETA_VANILLA_CLOUD_HEIGHT es la altura que usa el juego moderno (192.33 desde 1.18).
+// Comenta BETA_CLOUD_HEIGHT_FIX para dejar las nubes a la altura del juego.
+#define BETA_CLOUD_HEIGHT_FIX
+#define BETA_VANILLA_CLOUD_HEIGHT 192.33
+#define BETA_CLOUD_HEIGHT 108.33
+
+#ifdef BETA_CLOUD_HEIGHT_FIX
+    #define BETA_CLOUD_BASE BETA_CLOUD_HEIGHT
+#else
+    #define BETA_CLOUD_BASE BETA_VANILLA_CLOUD_HEIGHT
+#endif
+
+// BETA_DEBUG:
+//   0 = apagado (comportamiento normal)
+//   1 = cada etapa del cielo se pinta de un color y las nubes salen rojas y opacas:
+//         azul = SKY, naranja = SUNSET, MAGENTA = STARS, verde = CUSTOM_SKY,
+//         rojo oscuro = VOID, AMARILLO = etapa no reconocida
+//   2 = estrellas de Beta al maximo brillo (aunque sea de dia, para ver el mapa)
+//   3 = el cielo muestra uniformes: R = lluvia, G = tormenta, B = brillo de estrellas x2
+//       (si todo el cielo sale BLANCO, el uniforme hasSkylight no llega al shader)
+//   4 = anillo CIAN alrededor de donde Beta pone el sol y anillo NARANJA donde pone la luna;
+//       si el sol y la luna del juego quedan centrados en sus anillos, el marco de las estrellas es correcto
+#define BETA_DEBUG 0

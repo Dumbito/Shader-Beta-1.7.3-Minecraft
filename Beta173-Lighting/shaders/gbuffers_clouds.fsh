@@ -2,11 +2,15 @@
 
 #include "/lib/beta173.glsl"
 
-// World.drawClouds(float): color historico, lluvia, factor celeste y tormenta.
-// La geometria y el alfa siguen viniendo del pase CLOUDS de Iris.
+uniform mat4 gbufferModelViewInverse;
+uniform vec3 cameraPosition;
+
 in vec4 cloudColor;
+in vec3 cloudViewPos;
+
 out vec4 fragColor;
 
+// World.drawClouds(float): color historico, lluvia, factor celeste y tormenta.
 vec3 beta173CloudColor() {
     vec3 color = vec3(1.0);
     float rain = beta173Rain();
@@ -29,6 +33,28 @@ vec3 beta173CloudColor() {
     return color;
 }
 
+// RenderGlobal.renderCloudsFancy: arriba 1.0, abajo 0.7, caras X 0.9, caras Z 0.8.
+// La cara se deduce de la geometria en pantalla, sin depender de atributos del motor.
+float beta173CloudFaceShade() {
+    vec3 nView = normalize(cross(dFdx(cloudViewPos), dFdy(cloudViewPos)));
+    vec3 nWorld = mat3(gbufferModelViewInverse) * nView;
+    if (abs(nWorld.y) > 0.5) {
+        float worldY = (gbufferModelViewInverse * vec4(cloudViewPos, 1.0)).y + cameraPosition.y;
+        return worldY > BETA_CLOUD_BASE + 2.0 ? 1.0 : 0.7;
+    }
+    return abs(nWorld.x) > abs(nWorld.z) ? 0.9 : 0.8;
+}
+
 void main() {
+#if BETA_DEBUG == 1
+    // Diagnostico: si ves nubes rojas y opacas, este programa SI se ejecuta sobre las nubes
+    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+#elif BETA_CLOUD_COLOR_MODE == 1
+    fragColor = cloudColor;
+#elif BETA_CLOUD_COLOR_MODE == 2
     fragColor = vec4(cloudColor.rgb * beta173CloudColor(), cloudColor.a);
+#else
+    // El alfa sigue siendo el del motor: es la mascara de donde hay nube
+    fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);
+#endif
 }
