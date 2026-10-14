@@ -1,4 +1,4 @@
-# Beta173 Lighting — perfil histórico v0.4
+# Beta173 Lighting — perfil histórico v0.5
 
 Shaderpack experimental para Iris que reconstruye en Minecraft moderno las fórmulas de iluminación, ciclo celeste y niebla de Minecraft Beta 1.7.3. La prioridad de esta rama es la fidelidad histórica, no conservar la apariencia del renderizador moderno.
 
@@ -30,6 +30,16 @@ Funciones de referencia: `WorldProvider`, `WorldProviderHell`, `World`, `EntityR
 
 Editar `shaders/lib/config.glsl`. Las opciones activas corresponden al perfil histórico. `BETA_FOG_END` y `BETA_FOG_SKY_BLEND` están fijados a los valores de referencia de Beta Far; modificarlos deja de ser el perfil histórico estricto.
 
-## Estado
+## Verificación matemática
 
-Esta rama es una etapa de portado, no una declaración de equivalencia visual completa. No se afirma fidelidad total sin comparar las fórmulas y el comportamiento del juego en condiciones controladas.
+Se añadió una batería de regresión independiente de Python en `tests/test_beta173_reference.py`. Ejecutar desde la raíz del repositorio:
+
+```bash
+python -m unittest discover -s Beta173-Lighting/tests -v
+```
+
+Comprueba extremos y monotonía de la curva de brillo, periodicidad del ángulo celeste, límites de la resta de luz del cielo, efecto de lluvia/tormenta, rango del brillo estelar y constantes clave del shader. Estas pruebas validan la especificación matemática y evitan regresiones en constantes; **no compilan GLSL ni sustituyen las pruebas dentro de Minecraft**.
+
+## Estado v0.5
+
+Esta versión añade comprobaciones de regresión matemática para proteger los cálculos históricos mientras continúa el portado. Sigue sin equivaler a un port completo: no se afirma fidelidad visual total hasta comparar las fórmulas y el comportamiento del juego en condiciones controladas.
