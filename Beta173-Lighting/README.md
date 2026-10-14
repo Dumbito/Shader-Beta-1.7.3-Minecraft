@@ -1,11 +1,12 @@
-# Beta173 Lighting v0.7.1 — Cloud & Star Fix
+# Beta173 Lighting v0.7.2 — Beta Cloud Cycle & Stars
 
 Shaderpack experimental para Iris que reconstruye iluminación, niebla y cielo de Minecraft Beta 1.7.3.
 
-## Cambios de v0.7.1
+## Cambios de v0.7.2
 
-- Añade `gbuffers_clouds.vsh` y `gbuffers_clouds.fsh` como pase explícito para las nubes de Iris, preservando color y alfa de vértice.
-- Ajusta la salida del brillo de las estrellas para evitar una reducción adicional por alfa.
+- Replica en `gbuffers_clouds.fsh` la fórmula original de `World.drawClouds`: ciclo de color de día/noche y respuesta a lluvia/tormenta.
+- Restaura la salida RGBA original de estrellas de `RenderGlobal` (`glColor4f(b, b, b, b)`).
+- Conserva la geometría y el alfa del pase de nubes de Iris.
 - Mantiene `stars=true`, `clouds=fancy`, `sky=true`, `sun=true` y `moon=true` en `shaders.properties`.
 - Conserva las fórmulas de iluminación y perfiles de niebla de las versiones anteriores.
 
@@ -13,7 +14,7 @@ Shaderpack experimental para Iris que reconstruye iluminación, niebla y cielo d
 
 ## Instalación
 
-1. Descarga [Beta173-Lighting-0.7.1.zip](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7.1/Beta173-Lighting-0.7.1.zip).
+1. Descarga [Beta173-Lighting-0.7.2.zip](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7.2/Beta173-Lighting-0.7.2.zip).
 2. Copia el ZIP sin descomprimir en la carpeta `shaderpacks` de tu instancia.
 3. Selecciónalo desde **Opciones → Ajustes de vídeo → Shader Packs** y comprueba el resultado dentro del juego.
 
