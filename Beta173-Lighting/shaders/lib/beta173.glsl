@@ -8,6 +8,13 @@ uniform int worldTime;
 uniform float rainStrength;
 uniform float thunderStrength; // Iris lo entrega ya ponderado por la lluvia, igual que getWeightedThunderStrength
 uniform bool hasSkylight;      // false en Nether y End
+uniform bool hasCeiling;       // true en dimensiones con techo, como el Nether
+uniform float ambientLight;    // luz ambiental nativa de la dimensión, expuesta por Iris
+uniform vec3 fogColor;          // color de niebla nativo de Minecraft expuesto por Iris
+uniform float fogStart;         // inicio de niebla nativo
+uniform float fogEnd;           // fin de niebla nativo
+uniform float fogDensity;       // densidad de niebla nativa
+uniform int fogMode;             // 2048 EXP, 2049 EXP2, 9729 LINEAR
 uniform int isEyeInWater;      // 0 aire, 1 agua, 2 lava
 
 const float BETA_PI = 3.14159265359;
@@ -50,10 +57,10 @@ float beta173SkySubtracted() {
 // WorldProvider.generateLightBrightnessTable (0.1 en el Nether)
 float beta173Ambient() {
 #ifdef BETA_NETHER_AMBIENT
-    return hasSkylight ? 0.05 : 0.1;
-#else
-    return 0.05;
+    if (!hasSkylight && hasCeiling) return 0.1;
 #endif
+    if (!hasSkylight && !hasCeiling) return ambientLight;
+    return 0.05;
 }
 
 float beta173Brightness(float level) {
@@ -103,6 +110,14 @@ vec3 beta173SkyColor() {
 
 // WorldProvider.func_4096_a + EntityRenderer.updateFogColor
 vec3 beta173FogColor() {
+    // Nether: reproduce el color de WorldProviderHell.func_4096_a de Beta 1.7.3.
+    // End: usar el color de niebla nativo de la dimensión moderna, no inventar un color Beta.
+    if (!hasSkylight) {
+        if (hasCeiling) return vec3(0.2, 0.03, 0.03);
+        return fogColor;
+    }
+
+    // La ruta del Overworld conserva la fórmula histórica de v0.8.
     float d = beta173DayFactor();
     vec3 fog = vec3(0.7529412, 0.84705883, 1.0) * vec3(d * 0.94 + 0.06, d * 0.94 + 0.06, d * 0.91 + 0.09);
     fog += (beta173SkyColor() - fog) * BETA_FOG_SKY_BLEND;
@@ -135,11 +150,30 @@ vec3 beta173ApplyFog(vec3 color, float dist) {
     if (isEyeInWater == 2) {
         return mix(vec3(0.6, 0.1, 0.0), color, exp(-2.0 * dist));
     }
-    if (!hasSkylight) return color;
 
-    float fogEnd = BETA_FOG_END;
-    float fogStart = fogEnd * 0.25;
-    float f = clamp((fogEnd - dist) / (fogEnd - fogStart), 0.0, 1.0);
+    // End moderno: respetar el modo, color, densidad y distancias nativas de Iris/Minecraft.
+    // Los modos corresponden a GL_EXP, GL_EXP2 y GL_LINEAR.
+    if (!hasSkylight && !hasCeiling) {
+        float endNativeFogStart = max(fogStart, 0.0);
+        float endNativeFogEnd = max(fogEnd, endNativeFogStart + 0.001);
+        float endNativeFogFactor;
+        if (fogMode == 2048) {
+            endNativeFogFactor = exp(-max(fogDensity, 0.0) * dist);
+        } else if (fogMode == 2049) {
+            float densityDistance = max(fogDensity, 0.0) * dist;
+            endNativeFogFactor = exp(-(densityDistance * densityDistance));
+        } else {
+            float nativeFogRange = max(endNativeFogEnd - endNativeFogStart, 0.001);
+            endNativeFogFactor = clamp((endNativeFogEnd - dist) / nativeFogRange, 0.0, 1.0);
+        }
+        return mix(fogColor, color, clamp(endNativeFogFactor, 0.0, 1.0));
+    }
+
+    // Overworld conserva el perfil v0.8; el Nether comienza la niebla en distancia cero.
+    bool isNether = !hasSkylight && hasCeiling;
+    float betaFogEnd = BETA_FOG_END;
+    float betaFogStart = isNether ? 0.0 : betaFogEnd * 0.25;
+    float f = clamp((betaFogEnd - dist) / (betaFogEnd - betaFogStart), 0.0, 1.0);
     return mix(beta173FogColor(), color, f);
 #else
     return color;
@@ -154,9 +188,9 @@ vec3 beta173SkyGradient(float up) {
     vec3 base = up >= 0.0 ? sky : vec3(sky.r * 0.2 + 0.04, sky.g * 0.2 + 0.04, sky.b * 0.6 + 0.1);
 
     float dist = 16.0 / max(abs(up), 0.0005);
-    float fogEnd = BETA_FOG_END;
-    float fogStart = fogEnd * 0.25;
-    float f = clamp((fogEnd - dist) / (fogEnd - fogStart), 0.0, 1.0);
+    float betaFogEnd = BETA_FOG_END;
+    float betaFogStart = betaFogEnd * 0.25;
+    float f = clamp((betaFogEnd - dist) / (betaFogEnd - betaFogStart), 0.0, 1.0);
 #ifndef BETA_FOG
     f = 1.0;
 #endif
