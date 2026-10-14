@@ -8,6 +8,8 @@ uniform int worldTime;
 uniform float rainStrength;
 uniform float thunderStrength; // Iris lo entrega ya ponderado por la lluvia, igual que getWeightedThunderStrength
 uniform bool hasSkylight;      // false en Nether y End
+uniform bool hasCeiling;       // true en el Nether vanilla de Iris
+uniform float far;             // distancia de renderizado de Iris, en bloques
 uniform int isEyeInWater;      // 0 aire, 1 agua, 2 lava
 
 const float BETA_PI = 3.14159265359;
@@ -133,10 +135,14 @@ vec3 beta173ApplyFog(vec3 color, float dist) {
     if (isEyeInWater == 2) {
         return mix(vec3(0.6, 0.1, 0.0), color, exp(-2.0 * dist));
     }
-    if (!hasSkylight) return color;
+    bool isNether = !hasSkylight && hasCeiling;
 
+    // El End no debe heredar automaticamente la niebla del Nether.
+    if (!hasSkylight && !isNether) return color;
+
+    // Distancia reconstruida desde GameSettings.renderDistance de Beta.
     float fogEnd = BETA_FOG_END;
-    float fogStart = fogEnd * 0.25;
+    float fogStart = isNether ? 0.0 : fogEnd * 0.25;
     float f = clamp((fogEnd - dist) / (fogEnd - fogStart), 0.0, 1.0);
     return mix(beta173FogColor(), color, f);
 #else

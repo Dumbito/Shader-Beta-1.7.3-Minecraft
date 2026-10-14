@@ -96,5 +96,24 @@ class Beta173MathTests(unittest.TestCase):
         self.assertNotIn("BETA_SMOOTH", config)
 
 
+    def test_world_fog_uses_historical_render_distance(self):
+        shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        config = (SHADERS / "lib" / "config.glsl").read_text(encoding="utf-8")
+        self.assertIn("float fogEnd = BETA_FOG_END;", shader)
+        self.assertIn("float fogStart = isNether ? 0.0 : fogEnd * 0.25;", shader)
+        self.assertIn("#define BETA_RENDER_DISTANCE 0", config)
+
+    def test_fog_distinguishes_nether_from_end(self):
+        shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        self.assertIn("bool isNether = !hasSkylight && hasCeiling;", shader)
+        self.assertIn("if (!hasSkylight && !isNether) return color;", shader)
+
+    def test_sky_gradient_keeps_historical_fog_distance(self):
+        shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        sky_gradient = shader.split("vec3 beta173SkyGradient(float up)", 1)[1]
+        self.assertIn("float fogEnd = BETA_FOG_END;", sky_gradient)
+        self.assertEqual(shader.count("float fogEnd = BETA_FOG_END;"), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

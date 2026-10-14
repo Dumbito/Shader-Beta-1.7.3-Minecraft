@@ -168,21 +168,27 @@ class Beta173DifferentialTests(unittest.TestCase):
             places=10,
         )
 
-    def test_fixed_fog_blend_is_not_universal_across_render_distances(self):
+    def test_fog_blend_is_selected_per_historical_render_distance(self):
         config = CONFIG.read_text(encoding="utf-8")
-        match = re.search(r"#define\s+BETA_FOG_SKY_BLEND\s+([0-9.]+)", config)
-        self.assertIsNotNone(match, "Expected the current fixed blend constant")
-        shader_blend = float(match.group(1))
-        # EntityRenderer.updateFogColor: 1 - (1 / (4 - renderDistance))^0.25.
-        java_blends = {
-            render_distance: 1.0 - (1.0 / (4.0 - render_distance)) ** 0.25
-            for render_distance in (0, 1, 2, 3)
+        expected = {
+            0: ("256.0", "0.2928932"),
+            1: ("128.0", "0.2401643"),
+            2: ("64.0", "0.1591036"),
+            3: ("32.0", "0.0"),
         }
-        self.assertTrue(
-            any(abs(shader_blend - value) > 1e-6 for value in java_blends.values()),
-            "The fixed shader blend should be recorded as an approximation, not exact parity",
-        )
+        for distance, (fog_end, blend) in expected.items():
+            with self.subTest(render_distance=distance):
+                directive = "#if" if distance == 0 else "#elif"
+                self.assertIn(f"{directive} BETA_RENDER_DISTANCE == {distance}", config)
+                self.assertIn(f"#define BETA_FOG_END {fog_end}", config)
+                self.assertIn(f"#define BETA_FOG_SKY_BLEND {blend}", config)
 
+        java_blends = {
+            distance: 1.0 - (1.0 / (4.0 - distance)) ** 0.25
+            for distance in (0, 1, 2, 3)
+        }
+        for distance, (_, blend) in expected.items():
+            self.assertAlmostEqual(float(blend), java_blends[distance], places=6)
 
 if __name__ == "__main__":
     unittest.main()

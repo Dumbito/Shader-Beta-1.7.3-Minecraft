@@ -1,63 +1,55 @@
-## Experimental development build — not an official release
-
-An unnumbered development package is available for testing experimental lighting and fog changes. It is separate from the numbered releases and does not replace v0.5 as the latest numbered shader pack.
-
-**[Download Beta173-Lighting development build](Beta173-Lighting-dev.zip)**
-
-This build enables `BETA_SMOOTH` and uses an experimental fog end distance of 192 blocks. The GLSL sources pass standalone syntax validation after recursive include expansion, but in-game appearance and Iris compatibility still require testing. This package is not v0.6 and is not an official release.
-
 # Beta173 Lighting — Minecraft Beta 1.7.3
 
-Proyecto experimental para aproximar la iluminación y la niebla históricas de Minecraft Beta 1.7.3 en un entorno moderno con shaders.
+Proyecto experimental para reconstruir el comportamiento histórico de la iluminación y la niebla de Minecraft Beta 1.7.3 en Minecraft moderno mediante Iris.
 
-## Estado actual: v0.6 — Differential Regression
+## v0.6 — Historical Fog Profiles
 
-La versión más reciente del proyecto está integrada en la rama principal `main`.
+Esta versión incorpora perfiles de distancia de niebla basados en las fórmulas de `EntityRenderer` de Beta 1.7.3, además de las pruebas diferenciales y matemáticas del proyecto.
 
-**v0.6 añade pruebas diferenciales y documentación; no es un nuevo paquete de shader descargable.** El shader experimental empaquetado más reciente sigue siendo v0.5.
+**[Descargar Beta173-Lighting v0.6](Beta173-Lighting-0.6.zip)**
 
-- [Ver las pruebas diferenciales v0.6](Beta173-Lighting/tests/test_beta173_differential.py)
-- [Ver el README técnico de Beta173-Lighting](Beta173-Lighting/README.md)
+### Perfiles históricos
 
-Las pruebas comparan transcripciones en Python de las fórmulas históricas de brillo, ángulo celeste, reducción de luz del cielo y brillo estelar con los resultados esperados. No ejecutan el código Java original, no compilan GLSL ni garantizan equivalencia visual dentro del juego.
+Configura `BETA_RENDER_DISTANCE` en `Beta173-Lighting/shaders/lib/config.glsl`:
 
-## Versiones descargables del shader
+| Valor | Perfil de Beta | Distancia final de niebla |
+|---:|---|---:|
+| 0 | Far | 256 bloques |
+| 1 | Normal | 128 bloques |
+| 2 | Short | 64 bloques |
+| 3 | Tiny | 32 bloques |
 
-### v0.5 — Regression
+La niebla del terreno comienza al 25 % de la distancia final en el Overworld. En el Nether comienza desde el observador. La mezcla de color del cielo también utiliza los valores reconstruidos de cada perfil.
 
-Incluye el perfil de iluminación histórica y pruebas matemáticas independientes para comprobar propiedades de la iluminación, el ciclo celeste, la atenuación del cielo y el brillo de las estrellas.
+**Importante:** el selector reproduce las fórmulas históricas de distancia; no controla la distancia de chunks que carga Iris o Minecraft.
 
-**[Descargar Beta173-Lighting v0.5](Beta173-Lighting-0.5.zip)**
-
-### v0.4 — Historical
-
-Introduce el perfil histórico estricto, niveles de luz discretos y constantes de niebla inspiradas en el comportamiento de Beta 1.7.3.
-
-**[Descargar Beta173-Lighting v0.4](Beta173-Lighting-0.4.zip)**
-
-### Versiones anteriores
-
-- [v0.3](Beta173-Lighting-0.3.zip)
-- [v0.2](Beta173-Lighting-0.2.zip)
-- [v0.1](Beta173-Lighting-0.1.zip)
-
-## Ejecutar las pruebas
+## Verificación
 
 Desde la raíz del repositorio:
 
 ```bash
-python -m unittest discover -s Beta173-Lighting/tests -v
+python3 -m unittest discover -s Beta173-Lighting/tests -v
 ```
 
-Las pruebas matemáticas no sustituyen la compilación GLSL ni las pruebas dentro del juego.
+Las pruebas automatizadas comprueban las ecuaciones de referencia y los perfiles de niebla. La validación GLSL independiente también se ha ejecutado para tres shaders en los cuatro perfiles.
 
-## Limitaciones conocidas
+## Limitaciones
 
-- Algunas características del renderizado original se aproximan mediante el sistema de shaders moderno.
-- La temperatura del bioma y determinados comportamientos del cielo y la niebla todavía tienen aproximaciones.
-- La compatibilidad final depende del entorno de shaders utilizado.
-- La interpolación por partial ticks y la mezcla cielo/niebla dependiente de la distancia de renderizado siguen siendo diferencias conocidas.
+- La temperatura del bioma se aproxima con un valor neutral de 0.5.
+- El renderizado moderno no reproduce íntegramente la propagación de luz ni todos los estados del motor original.
+- La identificación de dimensiones depende de los uniformes que expone Iris.
+- La compilación estática no demuestra equivalencia visual ni compatibilidad total en ejecución.
 
-## Objetivo del proyecto
+La apariencia final de v0.6 todavía requiere pruebas dentro de Minecraft con Iris y Sodium. No se afirma fidelidad visual completa.
+
+## Versiones anteriores
+
+- [v0.5 — Regression](Beta173-Lighting-0.5.zip)
+- [v0.4 — Historical](Beta173-Lighting-0.4.zip)
+- [v0.3](Beta173-Lighting-0.3.zip)
+- [v0.2](Beta173-Lighting-0.2.zip)
+- [v0.1](Beta173-Lighting-0.1.zip)
+
+## Objetivo
 
 Priorizar la fidelidad histórica de Minecraft Beta 1.7.3 sobre los efectos visuales modernos.
