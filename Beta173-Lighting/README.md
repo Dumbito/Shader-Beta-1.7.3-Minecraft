@@ -1,40 +1,74 @@
-# Beta173 Lighting
+# Beta173 Lighting v0.8 — Estrellas y nubes de Beta
 
-Experimental Iris shaderpack that ports the lighting, sky and fog of Minecraft Beta 1.7.3 to modern Minecraft (tested target: 26.3).
+Shaderpack experimental para Iris que reconstruye iluminación, niebla y cielo de Minecraft Beta 1.7.3.
 
-## Reference
+Referencia de ingeniería inversa: [mc_b1.7.3_release](https://github.com/jacobo-mc/mc_b1.7.3_release) (solo como referencia; las fórmulas están portadas, no copiadas).
 
-The formulas come from the reconstructed Beta 1.7.3 source, used for reference only:
-https://github.com/jacobo-mc/mc_b1.7.3_release
+## Cambios de v0.8
 
-Ported (not copied) from `WorldProvider`, `WorldProviderHell`, `World`, `EntityRenderer` and `RenderGlobal`.
+- **Sin `#include` en el ZIP.** `tools/build_pack.py` incrusta la biblioteca en cada programa, así que el pack no depende de que Iris resuelva includes.
+- **Estrellas de Beta dibujadas dentro del cielo** (`gbuffers_skybasic.fsh`), sin depender del pase de estrellas del motor, que se descarta. Posiciones, tamaños y rotaciones salen de `RenderGlobal.renderStars()`: `java.util.Random(10842)`, 1500 intentos, **780 estrellas aceptadas**, radio 100, lado de 0.5 a 1.0. `tools/generate_starmap.py` rasteriza esas estrellas en `shaders/textures/starmap.png`. La mezcla es la de Beta: `glColor4f(b, b, b, b)` con `(SRC_ALPHA, ONE)`, es decir, se suma `b * b`.
+- **Nubes con color y sombreado de Beta** (`World.drawClouds` y `renderCloudsFancy`): arriba 1.0, abajo 0.7, caras X 0.9, caras Z 0.8. Ya no se multiplica sobre el color del motor, así que no puede haber oscurecimiento doble. El alfa sigue siendo el del motor porque es la máscara de dónde hay nube.
+- **Nubes a la altura de Beta** (108.33 en vez de 192.33).
+- Modos de diagnóstico ampliados (`BETA_DEBUG` 1 a 4).
 
-## Version 0.3
-- Thunder attenuation of sky light (`World.calculateSkylightSubtracted`).
-- Minimum brightness 0.1 in dimensions without sky light (`WorldProviderHell`), 0.05 in the Overworld.
-- Continuous light level instead of per-fragment rounding, so Smooth Lighting no longer shows steps.
-- Beta fog: linear (starts at 25% of the distance) in air, exponential in water and lava, with Beta fog colors by time of day, rain and thunder.
-- Beta sky: flat sky color that blends into the fog color toward the horizon, dark disc below it, star brightness. Sunrise/sunset fan, sun, moon and clouds stay as the game draws them.
+**Estado:** el código compila (glslang, 1200 combinaciones de opciones) y las pruebas pasan, pero **nada de esto se ha visto todavía dentro de Minecraft**. Las pruebas no demuestran fidelidad visual.
 
-## Version 0.2
-- Added gbuffers_textured_lit: entities, held items, dropped items and block entities use the same Beta 1.7.3 lighting as terrain (Iris falls back to this program).
-- Added gbuffers_armor_glint: enchantment glint is drawn unlit and without alpha discard.
+## Instalación
 
-## Version 0.1
-- Historical brightness table.
-- Historical celestial-angle interpolation.
-- Approximate sky attenuation by time and rain.
-- Maximum of attenuated sky light and block light.
+1. Copia `Beta173-Lighting-0.8.zip` (raíz del repositorio) sin descomprimir en la carpeta `shaderpacks` de tu instancia.
+2. Selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**.
 
-## Options
+Para construir el ZIP desde las fuentes:
 
-Edit `shaders/lib/config.glsl`. Each feature can be turned off by commenting its `#define` line:
-`BETA_THUNDER`, `BETA_NETHER_AMBIENT`, `BETA_SMOOTH`, `BETA_FOG`.
-`BETA_FOG_END` sets the fog distance in blocks (keep it at or below your render distance).
-To go back to the vanilla sky, delete `gbuffers_skybasic.vsh` and `gbuffers_skybasic.fsh`.
+```bash
+python3 Beta173-Lighting/tools/build_pack.py 0.8
+```
 
-## Limitations
-- A shaderpack cannot replace Minecraft CPU-side light propagation.
-- Modern lightmap coordinates may not map exactly to Beta 1.7.3 levels.
-- Not implemented: Nether/End fog, lightning flash, biome-dependent sky tint (a fixed temperature is used), cloud height and color, moon phases, particles beyond the shared lit program.
-- In-game testing is required.
+Para generar un ZIP de diagnóstico sin tocar el código (el ZIP no usa `#include`, así que las opciones van dentro de cada shader):
+
+```bash
+python3 Beta173-Lighting/tools/build_pack.py 0.8-debug1 BETA_DEBUG=1
+python3 Beta173-Lighting/tools/build_pack.py 0.8-nubes-motor BETA_CLOUD_COLOR_MODE=1
+python3 Beta173-Lighting/tools/build_pack.py 0.8-sin-estrellas BETA_STAR_FIELD=off
+```
+
+## Opciones (`shaders/lib/config.glsl`)
+
+| Opción | Valor | Qué hace |
+|---|---|---|
+| `BETA_STAR_FIELD` | comentar | Vuelve al pase de estrellas del motor |
+| `BETA_CLOUD_COLOR_MODE` | `0` / `1` / `2` | Color de Beta / solo el del motor / v0.7.2 (multiplicar) |
+| `BETA_CLOUD_HEIGHT_FIX` | comentar | Deja las nubes a la altura del juego |
+| `BETA_DEBUG` | `1` | Colorea las etapas del cielo (azul SKY, naranja SUNSET, magenta STARS, verde CUSTOM_SKY, rojo oscuro VOID, amarillo = no reconocida) y pinta las nubes de rojo |
+| `BETA_DEBUG` | `2` | Estrellas de Beta al máximo brillo, incluso de día |
+| `BETA_DEBUG` | `3` | El cielo muestra uniformes: R = lluvia, G = tormenta, B = brillo de estrellas ×2 (blanco = `hasSkylight` no llega) |
+| `BETA_DEBUG` | `4` | Anillo cian donde Beta pone el sol y naranja donde pone la luna |
+
+## Perfiles de niebla
+
+| `BETA_RENDER_DISTANCE` | Perfil | Distancia final |
+|---:|---|---:|
+| 0 | Far | 256 bloques |
+| 1 | Normal | 128 bloques |
+| 2 | Short | 64 bloques |
+| 3 | Tiny | 32 bloques |
+
+El selector no controla los chunks que carga Minecraft.
+
+## Pruebas
+
+```bash
+python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+```
+
+Las pruebas automatizadas no sustituyen una prueba visual en Minecraft.
+
+## Limitaciones
+
+- La orientación de las estrellas asume el marco con el que el juego dibuja el sol y la luna (Rx y luego Ry de -90°). Se comprueba con `BETA_DEBUG 4`.
+- Si Iris voltea la textura verticalmente al cargarla, las estrellas quedarían reflejadas respecto al original (mismo aspecto, otra disposición).
+- Las nubes conservan la geometría del motor; no se ha reconstruido el sistema de nubes de Beta (celdas de 12 bloques, desplazamiento, dos pasadas).
+- Sol, luna y fases de la luna siguen siendo los del juego moderno.
+- La temperatura del bioma sigue siendo una aproximación neutral.
+- La propagación de luz y el motor moderno difieren de Beta 1.7.3.
