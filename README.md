@@ -4,9 +4,9 @@ Proyecto experimental para reconstruir el aspecto de Minecraft Beta 1.7.3 en Min
 
 ## Última versión: v0.7 — Sky, Stars & Clouds
 
-**Descarga:** [Beta173-Lighting v0.7 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7)
+**[⬇ Descargar Beta173-Lighting v0.7 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7/Beta173-Lighting-0.7.zip)**
 
-La publicación adjunta el paquete ZIP listo para instalar. Si el release aún no aparece, espera a que termine la acción de empaquetado en GitHub Actions.
+[Ver página del release v0.7 y sus detalles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7).
 
 ### Cambios de v0.7
 
@@ -19,7 +19,7 @@ La publicación adjunta el paquete ZIP listo para instalar. Si el release aún n
 
 ### Instalación
 
-1. Descarga `Beta173-Lighting-0.7.zip) desde la sección **Assets** del release v0.7.
+1. Descarga `Beta173-Lighting-0.7.zip` desde el enlace directo de arriba.
 2. Copia el ZIP sin descomprimir en `shaderpacks` de tu instancia de Minecraft.
 3. Inicia Minecraft con Iris y Sodium.
 4. En **Opciones → Ajustes de vídeo → Shader Packs**, selecciona **Beta173-Lighting-0.7**.
@@ -54,7 +54,7 @@ La suite existente contiene 19 tests de Python. Las pruebas automatizadas y la v
 - La activación de estrellas/nubes depende de las capacidades y etapas de renderizado que exponga Iris.
 - La fidelidad visual final debe verificarse dentro de Minecraft.
 
-## Historial
+### Historial
 
 - **v0.7 — Sky, Stars & Clouds:** añade configuración de Iris para estrellas y nubes.
 - [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip): perfiles de niebla históricos.
