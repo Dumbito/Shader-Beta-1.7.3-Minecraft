@@ -1,4 +1,4 @@
-name: Package Beta173 Lighting v0.7
+name: Package Beta173 Lighting v0.7.1
 
 on:
   workflow_dispatch:
@@ -25,27 +25,28 @@ jobs:
       - name: Build shaderpack ZIP
         run: |
           cd Beta173-Lighting
-          zip -r ../Beta173-Lighting-0.7.zip shaders
-          unzip -l ../Beta173-Lighting-0.7.zip
+          zip -r ../Beta173-Lighting-0.7.1.zip shaders
+          unzip -l ../Beta173-Lighting-0.7.1.zip
 
       - name: Publish ZIP on repository homepage
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Publish packaged v0.7 ZIP on repository homepage"
-          file_pattern: Beta173-Lighting-0.7.zip
+          commit_message: "Publish packaged v0.7.1 ZIP"
+          file_pattern: Beta173-Lighting-0.7.1.zip
 
-      - name: Publish v0.7 release
+      - name: Publish v0.7.1 release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.7
-          name: Beta173 Lighting v0.7 - Sky, Stars & Clouds
+          tag_name: v0.7.1
+          name: Beta173 Lighting v0.7.1 - Cloud & Star Fix
           body: |
-            Beta173 Lighting v0.7.
+            Beta173 Lighting v0.7.1 — corrective release for the v0.7 sky pass.
 
-            - Adds Iris properties requesting stars and fancy clouds.
-            - Preserves the v0.6 historical fog profiles and block-lighting formulas.
-            - Includes the shaderpack ZIP with shaders/ at archive root.
+            - Adds an explicit Iris CLOUDS pass-through shader to preserve vanilla cloud geometry, vertex color, and alpha.
+            - Prevents star brightness from being multiplied a second time by fragment alpha.
+            - Keeps the existing Beta 1.7.3 sky, fog, and block-lighting implementation.
+            - The ZIP contains shaders/ at archive root.
 
-            Note: stars and clouds still require in-game verification with the target Iris/Minecraft version.
-          files: Beta173-Lighting-0.7.zip
+            Compatibility note: cloud rendering is affected by Iris/Sodium behavior that varies by Minecraft version. This build requires in-game verification on Minecraft 26.3 with Iris 1.11.7; no claim of a tested runtime fix is made until verified.
+          files: Beta173-Lighting-0.7.1.zip
           fail_on_unmatched_files: true
