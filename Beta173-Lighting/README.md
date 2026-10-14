@@ -43,3 +43,23 @@ Comprueba extremos y monotonía de la curva de brillo, periodicidad del ángulo 
 ## Estado v0.5
 
 Esta versión añade comprobaciones de regresión matemática para proteger los cálculos históricos mientras continúa el portado. Sigue sin equivaler a un port completo: no se afirma fidelidad visual total hasta comparar las fórmulas y el comportamiento del juego en condiciones controladas.
+
+
+## v0.6 — comparación diferencial
+
+La rama `v0.6-beta173-differential` añade `tests/test_beta173_differential.py`, que compara las ecuaciones portadas con transcripciones de las fórmulas Java del repositorio de referencia de Jacob:
+
+- `WorldProvider.generateLightBrightnessTable()`
+- `WorldProvider.calculateCelestialAngle()`
+- `World.calculateSkylightSubtracted()`
+- `World.getStarBrightness()`
+
+La suite comprueba múltiples tiempos del ciclo y combinaciones de lluvia/tormenta. También registra dos diferencias conocidas: la interpolación `partialTicks` no está expuesta al shader y la mezcla entre cielo y niebla usa una constante fija, mientras que el renderizador Java calcula esa mezcla según la distancia de renderizado.
+
+Ejecutar toda la batería desde la raíz del repositorio:
+
+```bash
+python -m unittest discover -s Beta173-Lighting/tests -v
+```
+
+**Alcance:** estas son pruebas diferenciales de ecuaciones transcritas; no ejecutan el código Java de Jacob dentro de la prueba, no compilan GLSL y no comparan imágenes del juego. Las diferencias de precisión de coma flotante Java/GLSL y el lightmap del motor moderno siguen requiriendo validación adicional.
