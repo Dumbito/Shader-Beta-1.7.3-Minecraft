@@ -27,7 +27,7 @@ vec3 beta173WorldToStarFrame(vec3 d) {
 float beta173StarCoverage(vec3 local) {
     vec2 uv = vec2(atan(local.x, local.z) / (BETA_PI * 2.0) + 0.5,
                    asin(clamp(local.y, -1.0, 1.0)) / BETA_PI + 0.5);
-    return texture(noisetex, uv).r;
+    return step(0.5, texture(noisetex, uv).r);
 }
 
 void main() {

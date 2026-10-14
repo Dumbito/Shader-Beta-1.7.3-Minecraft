@@ -22,7 +22,7 @@ vec3 beta173CloudColor() {
     }
 
     float day = beta173DayFactor();
-    color *= vec3(day * 0.9 + 0.1, day * 0.9 + 0.1, day * 0.85 + 0.15);
+    color *= vec3(day, day, day);
 
     float thunder = beta173Thunder();
     if (thunder > 0.0) {
