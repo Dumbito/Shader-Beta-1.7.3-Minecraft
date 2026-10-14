@@ -80,6 +80,10 @@ class LegacyClimateTests(unittest.TestCase):
 
 
 class GeneratedAssetTests(unittest.TestCase):
+    def test_shader_texture_y_index_compensates_png_scanline_order(self):
+        shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
+        self.assertIn("1023 - (octave * 256 + (z & 255))", shader)
+
     def test_generates_seed_specific_png_and_glsl_offsets(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "shaders"

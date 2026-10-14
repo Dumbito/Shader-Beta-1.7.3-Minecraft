@@ -13,9 +13,11 @@ int beta173ClimateWrap(float value) {
 }
 
 int beta173ClimateGradientIndex(int x, int z, int octave) {
-    // La textura contiene p[x + p[z]] % 12 precalculado; una lectura por esquina.
+    // La textura PNG se guarda con filas invertidas para compensar el orden de upload de Iris.
+    // El inverso vertical recupera la celda original octave/z; una lectura por esquina.
+    int textureY = 1023 - (octave * 256 + (z & 255));
     float encoded = texelFetch(beta173ClimateGradient,
-                               ivec2(x & 255, octave * 256 + (z & 255)), 0).r;
+                               ivec2(x & 255, textureY), 0).r;
     return int(floor(encoded * 255.0 + 0.5));
 }
 
