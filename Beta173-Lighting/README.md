@@ -1,17 +1,21 @@
-# Beta173 Lighting v0.7 — Sky, Stars & Clouds
+# Beta173 Lighting v0.7.1 — Cloud & Star Fix
 
-Shaderpack experimental para Iris que reconstruye iluminación y niebla de Minecraft Beta 1.7.3.
+Shaderpack experimental para Iris que reconstruye iluminación, niebla y cielo de Minecraft Beta 1.7.3.
 
-## Cambios de v0.7
+## Cambios de v0.7.1
 
-- Añade `shaders/shaders.properties` con `stars=true` y `clouds=fancy`.
-- Mantiene `sky=true`, `sun=true` y `moon=true`.
-- Conserva las fórmulas y perfiles de niebla de v0.6.
-- La configuración solicita a Iris estrellas y nubes, pero debe verificarse en ejecución que la etapa de renderizado del cielo sea compatible con la versión concreta de Iris/Minecraft.
+- Añade `gbuffers_clouds.vsh` y `gbuffers_clouds.fsh` como pase explícito para las nubes de Iris, preservando color y alfa de vértice.
+- Ajusta la salida del brillo de las estrellas para evitar una reducción adicional por alfa.
+- Mantiene `stars=true`, `clouds=fancy`, `sky=true`, `sun=true` y `moon=true` en `shaders.properties`.
+- Conserva las fórmulas de iluminación y perfiles de niebla de las versiones anteriores.
+
+**Compatibilidad:** el empaquetado y las pruebas automatizadas pasan. La representación de nubes y estrellas aún necesita validación visual en Minecraft, especialmente con Minecraft 26.3 e Iris 1.11.7. La interacción Iris/Sodium puede afectar a las nubes; no se afirma una corrección visual definitiva hasta comprobarla en el juego.
 
 ## Instalación
 
-Copia el ZIP sin descomprimir en la carpeta `shaderpacks` de la instancia y selecciónalo desde **Opciones → Ajustes de vídeo → Shader Packs**.
+1. Descarga [Beta173-Lighting-0.7.1.zip](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/download/v0.7.1/Beta173-Lighting-0.7.1.zip).
+2. Copia el ZIP sin descomprimir en la carpeta `shaderpacks` de tu instancia.
+3. Selecciónalo desde **Opciones → Ajustes de vídeo → Shader Packs** y comprueba el resultado dentro del juego.
 
 ## Perfiles de niebla
 
@@ -38,4 +42,4 @@ Las pruebas automatizadas no sustituyen una prueba visual en Minecraft.
 
 - La temperatura del bioma sigue siendo una aproximación neutral.
 - La propagación de luz y el motor moderno difieren de Beta 1.7.3.
-- Las estrellas y nubes deben validarse dentro del juego con la versión de Iris usada.
+- La visibilidad final de estrellas y nubes debe validarse con la versión concreta de Minecraft, Iris y Sodium.
