@@ -2,13 +2,22 @@
 
 Proyecto experimental para reconstruir el comportamiento histórico de la iluminación y la niebla de Minecraft Beta 1.7.3 en Minecraft moderno mediante Iris.
 
-## v0.6 — Historical Fog Profiles
+## Última versión: v0.6 — Historical Fog Profiles
 
-Esta versión incorpora perfiles de distancia de niebla basados en las fórmulas de `EntityRenderer` de Beta 1.7.3, además de las pruebas diferenciales y matemáticas del proyecto.
+**[⬇ Descargar Beta173-Lighting v0.6 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip)**
 
-**[Descargar Beta173-Lighting v0.6](Beta173-Lighting-0.6.zip)**
+El ZIP contiene la carpeta `shaders/` en la raíz y está preparado para instalarse como shaderpack.
 
-### Perfiles históricos
+### Instalación
+
+1. Descarga `Beta173-Lighting-0.6.zip` desde el enlace de arriba.
+2. Copia el archivo ZIP, sin descomprimirlo, en la carpeta `shaderpacks` de tu instancia de Minecraft.
+3. Inicia Minecraft con Iris y Sodium.
+4. Abre **Opciones → Ajustes de vídeo → Shader Packs** y selecciona **Beta173-Lighting-0.6**.
+
+La compatibilidad en tiempo de ejecución debe comprobarse en el juego. La validación estática y las pruebas automatizadas no garantizan equivalencia visual ni compatibilidad completa con todas las versiones de Iris/Minecraft.
+
+### Perfiles históricos de niebla
 
 Configura `BETA_RENDER_DISTANCE` en `Beta173-Lighting/shaders/lib/config.glsl`:
 
@@ -28,23 +37,22 @@ La niebla del terreno comienza al 25 % de la distancia final en el Overworld. En
 Desde la raíz del repositorio:
 
 ```bash
-python3 -m unittest discover -s Beta173-Lighting/tests -v
+python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
 ```
 
-Las pruebas automatizadas comprueban las ecuaciones de referencia y los perfiles de niebla. La validación GLSL independiente también se ha ejecutado para tres shaders en los cuatro perfiles.
+La suite actual tiene **19 tests de Python aprobados**. También se ha ejecutado validación GLSL estática para tres shaders en los cuatro perfiles. Estas comprobaciones no sustituyen la prueba visual en Minecraft.
 
-## Limitaciones
+## Limitaciones conocidas
 
 - La temperatura del bioma se aproxima con un valor neutral de 0.5.
 - El renderizado moderno no reproduce íntegramente la propagación de luz ni todos los estados del motor original.
 - La identificación de dimensiones depende de los uniformes que expone Iris.
 - La compilación estática no demuestra equivalencia visual ni compatibilidad total en ejecución.
-
-La apariencia final de v0.6 todavía requiere pruebas dentro de Minecraft con Iris y Sodium. No se afirma fidelidad visual completa.
+- La apariencia final de v0.6 todavía requiere pruebas dentro de Minecraft con Iris y Sodium.
 
 ## Historial de versiones
 
-### [v0.6 — Historical Fog Profiles](Beta173-Lighting-0.6.zip)
+### [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip)
 - Perfiles de niebla Far, Normal, Short y Tiny: 256, 128, 64 y 32 bloques.
 - Mezcla cielo/niebla calculada por perfil y tratamiento diferenciado de dimensiones.
 - Pruebas diferenciales y matemáticas de las fórmulas históricas.
