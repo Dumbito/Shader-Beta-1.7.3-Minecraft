@@ -3,6 +3,7 @@ name: v0.9 universal climate candidate
 on:
   push:
     branches:
+      - main
       - feature/v0.9-universal-climate
     paths:
       - "Beta173-Lighting/**"
@@ -13,10 +14,11 @@ on:
       - "Beta173-Lighting/**"
       - "Beta173-Climate-Bridge/**"
       - ".github/workflows/universal-climate.yml"
+      - "README.md"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   shaderpack:
@@ -95,7 +97,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 25
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "25"
@@ -115,3 +117,43 @@ jobs:
           path: Beta173-Climate-Bridge/build/libs/beta173-climate-bridge-0.1.0.jar
           if-no-files-found: error
           retention-days: 14
+
+  publish-main-assets:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [shaderpack, climate-bridge]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Download universal shaderpack
+        uses: actions/download-artifact@v4
+        with:
+          name: Beta173-Lighting-0.9.0-universal-experimental
+          path: /tmp/beta173-shaderpack
+
+      - name: Download climate bridge
+        uses: actions/download-artifact@v4
+        with:
+          name: Beta173-Climate-Bridge-0.1.0-experimental
+          path: /tmp/beta173-bridge
+
+      - name: Publish tested candidate files to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f /tmp/beta173-shaderpack/Beta173-Lighting-0.9.0-universal-experimental.zip
+          test -f /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar
+          cp /tmp/beta173-shaderpack/Beta173-Lighting-0.9.0-universal-experimental.zip .
+          cp /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar Beta173-Climate-Bridge-0.1.0-experimental.jar
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Beta173-Lighting-0.9.0-universal-experimental.zip Beta173-Climate-Bridge-0.1.0-experimental.jar
+          if git diff --cached --quiet; then
+            echo "Candidate assets already published; no commit needed."
+            exit 0
+          fi
+          git commit -m "build(v0.9): publish universal climate experimental artifacts [skip ci]"
+          git push

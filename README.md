@@ -7,12 +7,27 @@
 
 <p align="center">
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base)</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-experimental.zip">Descargar v0.9 universal (experimental)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-experimental.jar">Beta173 Climate Bridge (experimental)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base anterior)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático por semilla</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml">Pruebas y compilación del candidato universal</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía v0.9.0-pre1</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía de v0.9</a> ·
   <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
 </p>
+
+---
+
+## 🧪 v0.9 universal — candidato experimental en validación
+
+La rama [`feature/v0.9-universal-climate`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9-universal-climate) desarrolla un ZIP que no pide editar shaders ni introducir manualmente una semilla. El empaquetado y los cinco pares GLSL ya pasan el workflow del candidato; el puente Java se encuentra en corrección/compilación y la validación visual en Minecraft sigue pendiente.
+
+- **ZIP universal sin mod:** usa automáticamente el uniforme `temperature` de Iris para la temperatura base del bioma actual. Funciona en cualquier mundo sin preparación, pero no reconstruye el campo climático espacial original de Beta.
+- **Con Beta173 Climate Bridge (Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador usa la semilla real del servidor integrado y devuelve el color HSB/RGB histórico de 8 bits sin pedir configuración por mundo.
+- **Multijugador remoto:** Minecraft entrega al cliente una versión ofuscada de la semilla. Sin cooperación del servidor no puede recuperarse la semilla original; el ZIP usa su fallback automático por bioma en lugar de prometer una equivalencia exacta.
+
+Los enlaces de descarga del candidato universal solo deben considerarse válidos una vez que el workflow los publique en `main`. **La versión estable sigue siendo v0.8.1** hasta compilar el puente, corregir cualquier regresión y completar pruebas visuales en Minecraft.
 
 ---
 
