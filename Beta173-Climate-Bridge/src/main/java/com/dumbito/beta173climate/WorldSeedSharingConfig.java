@@ -29,6 +29,7 @@ public final class WorldSeedSharingConfig {
                 }
             } else {
                 Files.createDirectories(FILE.getParent());
+                properties.setProperty("shareWorldSeed", "false");
                 try (OutputStream out = Files.newOutputStream(FILE)) {
                     properties.store(out, "Set shareWorldSeed=true only if you want compatible clients to receive the world seed. Defaults to false.");
                 }

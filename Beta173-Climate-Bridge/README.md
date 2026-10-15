@@ -25,7 +25,7 @@ This is a source-level port of Beta's climate noise, not proof of pixel-perfect 
 ## Install
 
 1. Install the matching Fabric Loader, Fabric API and Iris versions above.
-2. Put beta173-climate-bridge-0.1.0.jar in the Minecraft instance's mods/ folder.
+2. Put Beta173-Climate-Bridge-0.1.0-mc26.3.jar in the Minecraft instance's mods/ folder.
 3. Use a Beta173 Lighting shader build whose sky function reads uniform float temperature; rather than a fixed BETA_SKY_TEMPERATURE constant.
 4. Restart Minecraft and enter the world. In single-player/LAN, the integrated server supplies the seed automatically. For a dedicated multiplayer server, install the mod on both client and server and set shareWorldSeed=true in the server's config/beta173-climate-bridge.properties only if the administrator agrees to share the seed. The setting defaults to false. On a server without the mod, or without this opt-in, the bridge safely falls back to Iris' normal temperature.
 

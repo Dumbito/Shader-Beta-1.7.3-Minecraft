@@ -29,16 +29,13 @@ loom {
             sourceSet sourceSets.client
         }
     }
-    mixin {
-        defaultRefmapName = 'beta173-climate-bridge.refmap.json'
-    }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    compileOnly "maven.modrinth:iris:${project.iris_version}"
+    compileOnly "maven.modrinth:YL57xq9U:${project.iris_version_id}"
 
     testImplementation platform('org.junit:junit-bom:5.12.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
