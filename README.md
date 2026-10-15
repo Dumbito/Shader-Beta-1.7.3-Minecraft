@@ -30,6 +30,20 @@ La versión oficial **Beta173 Lighting v0.9.0** se publica en `main` como [ZIP i
 El ZIP oficial v0.9.0 y el Climate Bridge se publican desde `main`, junto con sus hashes SHA-256. **La prueba visual manual de v0.9.0 fue superada**, por lo que esta versión sustituye a v0.8.1 como versión estable actual. El RC1 se conserva como artefacto histórico. La aprobación visual no significa igualdad píxel a píxel con el motor original ni certifica todas las combinaciones posibles de semillas, tiempos y clima.
 
 
+### Investigación siguiente: geometría de nubes de Beta (v0.9.x experimental)
+
+La siguiente investigación intenta reconstruir la malla original de nubes de Beta 1.7.3, en vez de utilizar la geometría moderna como resultado final. El candidato usa el pase geometry shader `gbuffers_clouds.gsh` de Iris y la textura original de nubes, con una cuadrícula de celdas, paredes laterales segmentadas, desplazamiento y sombreado histórico por cara.
+
+**Este trabajo todavía no está incluido en el ZIP oficial v0.9.0.** Se conserva v0.9.0 como la versión publicada mientras el nuevo candidato pasa compilación GLSL y pruebas visuales dentro de Minecraft.
+
+- [Abrir el PR experimental #14](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/pull/14)
+- [Ver la rama de desarrollo](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9-beta-cloud-geometry)
+- Documentación de Iris: [geometry stages en gbuffers](https://shaders.properties/current/reference/programs/gbuffers/) y [texturas personalizadas](https://shaders.properties/current/reference/buffers/custom_textures/).
+
+Riesgo pendiente: el generador necesita suficientes primitivas de la malla de nubes nativa en un mismo draw call para emitir todas las caras del modelo Beta. El PR está en borrador hasta que quede comprobado en juego.
+
+---
+
 ### Beta173 Climate Bridge — port climático mediante mod
 
 El mod [Beta173-Climate-Bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Climate-Bridge) reconstruye en Java la secuencia de ruido Simplex de cuatro octavas basada en la semilla del mundo usada por Beta 1.7.3. En lugar de exigir cambios a mano en GLSL, intercepta el uniforme existente `temperature` de Iris 1.11.6 para Minecraft 26.3. No añade bloques, objetos, interfaces ni recursos visuales.
