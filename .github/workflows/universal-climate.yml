@@ -200,7 +200,7 @@ jobs:
           - Matriz diferencial ejecutada contra una referencia Java de las fórmulas de Beta 1.7.3.
           - Validación climática amplia de semillas, coordenadas negativas/extremas, horas, tiempo parcial, lluvia y tormenta.
           - La geometría nativa de nubes sigue siendo la opción predeterminada; la malla Beta personalizada continúa como opción experimental.
-- La visibilidad RGB nocturna de las nubes tiene un mínimo configurable; el alfa y la geometría no se recortan según los ticks.
+          - La visibilidad RGB nocturna de las nubes tiene un mínimo configurable; el alfa y la geometría no se recortan según los ticks.
           - ZIP universal sin edición manual de GLSL; Climate Bridge opcional para reconstruir el campo climático seed-based donde la semilla esté disponible.
 
           ## Validación
