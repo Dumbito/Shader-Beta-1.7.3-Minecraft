@@ -194,7 +194,7 @@ class BuildPackTests(unittest.TestCase):
     def test_every_source_include_exists(self):
         import re
         for path in (ROOT / "shaders").rglob("*"):
-            if path.suffix in {".vsh", ".fsh", ".glsl"}:
+            if path.suffix in {".vsh", ".fsh", ".gsh", ".glsl"}:
                 for inc in re.findall(r'#include "([^"]+)"', path.read_text(encoding="utf-8")):
                     self.assertTrue((ROOT / "shaders" / inc.lstrip("/")).is_file(), f"{path.name} -> {inc}")
 

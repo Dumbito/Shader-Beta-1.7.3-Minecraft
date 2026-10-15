@@ -72,7 +72,7 @@ jobs:
           assert "#define BETA_CLIMATE_SEED_CONFIGURED 1" not in sky
           assert not (root / "shaders/textures/beta173_climate_gradient.png").exists()
           for name in ("gbuffers_armor_glint", "gbuffers_clouds", "gbuffers_skybasic", "gbuffers_terrain", "gbuffers_textured_lit"):
-              for suffix in (".vsh", ".fsh"):
+              for suffix in (".vsh", ".fsh", ".gsh"):
                   source = (root / "shaders" / f"{name}{suffix}").read_text()
                   assert "#include" not in source, f"include not resolved: {name}{suffix}"
           print("Official v0.9.0 checks passed: no seed-specific table; automatic fallback; no unresolved includes.")
@@ -87,7 +87,12 @@ jobs:
           for program in gbuffers_armor_glint gbuffers_clouds gbuffers_skybasic gbuffers_terrain gbuffers_textured_lit; do
             cp "$pack/$program.vsh" "$tmp/$program.vert"
             cp "$pack/$program.fsh" "$tmp/$program.frag"
-            glslangValidator -l "$tmp/$program.vert" "$tmp/$program.frag"
+            if [ -f "$pack/$program.gsh" ]; then
+              cp "$pack/$program.gsh" "$tmp/$program.geom"
+              glslangValidator -l "$tmp/$program.vert" "$tmp/$program.geom" "$tmp/$program.frag"
+            else
+              glslangValidator -l "$tmp/$program.vert" "$tmp/$program.frag"
+            fi
           done
 
       - name: Upload official universal shaderpack v0.9.0
