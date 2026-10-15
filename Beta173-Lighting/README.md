@@ -83,13 +83,14 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 
 ## Precisión y limitaciones
 
-- La implementación reproduce el orden de inicialización de `java.util.Random`, los cuatro offsets/permutaciones, el muestreo de gradientes, las escalas/amplitudes de las octavas y el método Simplex 2D de Beta 1.7.3.
-- Para las coordenadas se usa `cameraPositionInt` con `cameraPositionFract` de Iris y la corrección entre la cámara y la posición de los ojos. Esto evita depender del uniforme `cameraPosition`, que puede reiniciarse para limitar errores de precisión.
-- El port en GLSL usa `float`, mientras que Java utiliza `double`. La reproducción matemática es estructuralmente fiel, pero no se garantiza igualdad bit a bit y pequeñas diferencias pueden cambiar un canal cerca de un umbral de cuantización.
-- La lectura de `level.dat` solo funciona si la semilla está incluida en ese archivo. Para servidores o mundos con datos ocultos, usa `--seed` o el modo interactivo.
-- La comprobación del ZIP y las pruebas automáticas no sustituyen la revisión visual con la versión concreta de Minecraft, Iris y Sodium.
+- **Campo climático histórico:** v0.9.1 elimina el valor neutral fijo. El ZIP universal usa la temperatura del bioma que proporciona Iris como fallback, sin configuración manual. Para reconstruir el campo espacial de Beta se puede instalar Beta173 Climate Bridge: en un mundo de un jugador obtiene automáticamente la semilla y calcula el ruido en Java. En multijugador remoto, el servidor debe instalar el bridge y activar explícitamente `shareWorldSeed=true`; por privacidad, se encuentra desactivado de forma predeterminada.
+- **Ruta ZIP específica de semilla:** también continúa disponible para quien no quiera usar el bridge. La herramienta `configure_climate_pack.py` genera los offsets/texturas dentro de una carpeta temporal y construye un paquete separado; no es necesario editar los fuentes a mano. El modo de lectura de `level.dat` depende de que el archivo incluya la semilla; si no la contiene, se puede indicar con `--seed` o mediante el modo interactivo.
+- **Precisión numérica y renderer:** el bridge reconstruye el campo climático mediante Java y puede reproducir la conversión HSB histórica; la salida final, sin embargo, sigue pasando por el pipeline moderno. La ruta heredada que calcula el ruido en GLSL emplea `float` donde Java usa `double`, así que esa ruta no garantiza igualdad bit a bit.
+- **Coordenadas de cámara:** la ruta GLSL específica de semilla utiliza `cameraPositionInt` y `cameraPositionFract` para reducir los problemas de precisión en mundos grandes. Esta ruta no debe confundirse con el cálculo climático que proporciona el bridge.
+- **Geometría de nubes:** la malla personalizada de Beta forma parte del ZIP oficial v0.9.1 y puede desactivarse desde **Shader Pack Settings** para volver a la geometría moderna. Aunque el geometry shader enlace correctamente, la comprobación visual de cobertura, clipping, transparencia, profundidad y desplazamiento debe hacerse en la combinación real de Minecraft/Iris/Sodium.
+- **Pruebas:** la suite automatizada, la integridad del ZIP y la compilación GLSL detectan regresiones estructurales, pero no simulan todo el renderer ni todas las semillas, coordenadas, dimensiones, horas o condiciones meteorológicas.
 
-La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. Como seguimiento, se recomienda ampliar las pruebas en semillas, coordenadas y condiciones meteorológicas adicionales; eso no impide que v0.9.0 sea la versión oficial.
+La prueba visual manual aprobada corresponde a v0.9.0. La nueva geometría de nubes incluida en v0.9.1 requiere su propia validación visual; las pruebas automatizadas no deben presentarse como si esa validación ya se hubiera completado.
 
 ## Versión oficial v0.9.1
 
