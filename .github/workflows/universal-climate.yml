@@ -210,5 +210,5 @@ jobs:
             gh release upload v1.0.1 Beta173-Lighting-1.0.1.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar SHA256SUMS-v1.0.1.txt --clobber
           else
             gh release create v1.0.1 Beta173-Lighting-1.0.1.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar SHA256SUMS-v1.0.1.txt \
-              --title "Beta173 Lighting v1.0.1 — Primera versión estable" --notes-file "$notes_file"
+              --title "Beta173 Lighting v1.0.1 — Parche de visibilidad nocturna de nubes" --notes-file "$notes_file"
           fi
