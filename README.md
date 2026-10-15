@@ -518,14 +518,8 @@ Estas limitaciones describen diferencias conocidas de alcance y validación; no 
 
 Las siguientes líneas representan trabajo potencial, no funciones que deban considerarse ya terminadas:
 
-- Validar visualmente la geometría de nubes de v0.9.1 desde arriba, abajo y los laterales; ajustar cobertura, clipping, transparencia, profundidad o desplazamiento solo si las pruebas revelan defectos.
-- Comparar la malla personalizada de v0.9.1 con capturas de referencia de Beta 1.7.3 y conservar la geometría moderna como fallback de compatibilidad.
-- Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
 - Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
 - Ampliar la matriz de validación climática de v0.9.0 con más semillas, coordenadas, horas y condiciones meteorológicas, comparando los resultados con la referencia Java.
-- Probar sistemáticamente amanecer, mediodía, atardecer, noche, lluvia, tormenta y niebla en cada dimensión.
-- Documentar por versión las combinaciones de Minecraft, Iris y Sodium en las que se haya probado visualmente el shaderpack.
-- Mantener los perfiles de diagnóstico y el empaquetado reproducible para que futuras correcciones no deshagan las anteriores.
 
 El orden puede cambiar según los resultados de las pruebas. La prioridad es preferir cambios verificables y reversibles frente a introducir efectos que parezcan correctos en una sola captura, pero fallen en otras condiciones.
 
