@@ -35,9 +35,9 @@ loom {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modCompileOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    modCompileOnly "maven.modrinth:YL57xq9U:bAdKrpw8"
+    // Iris Extension 26.3 uses implementation for Loader/Iris in this Loom setup.
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "maven.modrinth:YL57xq9U:bAdKrpw8"
 }
 
 processResources {
