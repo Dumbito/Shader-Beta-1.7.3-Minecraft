@@ -36,8 +36,8 @@ La siguiente investigación intenta reconstruir la malla original de nubes de Be
 
 **Este trabajo todavía no está incluido en el ZIP oficial v0.9.0.** Se conserva v0.9.0 como la versión publicada mientras el nuevo candidato pasa compilación GLSL y pruebas visuales dentro de Minecraft.
 
-- [Abrir el PR experimental #14](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/pull/14)
-- [Ver la rama de desarrollo](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9-beta-cloud-geometry)
+- [Abrir el PR experimental #14](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/pull/15)
+- [Ver la rama de desarrollo](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9.1-beta-cloud-geometry)
 - Documentación de Iris: [geometry stages en gbuffers](https://shaders.properties/current/reference/programs/gbuffers/) y [texturas personalizadas](https://shaders.properties/current/reference/buffers/custom_textures/).
 
 Riesgo pendiente: el generador necesita suficientes primitivas de la malla de nubes nativa en un mismo draw call para emitir todas las caras del modelo Beta. El PR está en borrador hasta que quede comprobado en juego.
