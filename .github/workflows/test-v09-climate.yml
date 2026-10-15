@@ -34,3 +34,34 @@ jobs:
 
       - name: Run regression tests
         run: python -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+
+      - name: Install GLSL validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+
+      - name: Build seed-specific pack and link GLSL programs
+        shell: bash
+        run: |
+          set -euo pipefail
+          temp_dir="$(mktemp -d)"
+          trap 'rm -rf "$temp_dir"' EXIT
+
+          python3 Beta173-Lighting/tools/configure_climate_pack.py \
+            --seed 123456789 --output-dir "$temp_dir"
+
+          pack_zip="$(find "$temp_dir" -maxdepth 1 -name 'Beta173-Lighting-0.9-climate-seed-*.zip' -print -quit)"
+          test -n "$pack_zip"
+          mkdir -p "$temp_dir/pack"
+          unzip -q "$pack_zip" -d "$temp_dir/pack"
+
+          for program in \
+            gbuffers_armor_glint \
+            gbuffers_clouds \
+            gbuffers_skybasic \
+            gbuffers_terrain \
+            gbuffers_textured_lit; do
+            cp "$temp_dir/pack/shaders/$program.vsh" "$temp_dir/$program.vert"
+            cp "$temp_dir/pack/shaders/$program.fsh" "$temp_dir/$program.frag"
+            glslangValidator -l "$temp_dir/$program.vert" "$temp_dir/$program.frag"
+          done
