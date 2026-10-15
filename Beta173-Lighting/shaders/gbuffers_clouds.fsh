@@ -12,12 +12,16 @@ flat in float betaCloudShade;
 
 out vec4 fragColor;
 
-// La cobertura de la nube no debe depender del reloj: solo se modifica el RGB.
-// En Beta el factor historico llega a un minimo del 10%; en el pipeline moderno
-// puede percibirse como desaparicion sobre el cielo nocturno. Elevamos levemente
-// ese suelo configurable, sin recortar la opacidad ni cambiar la geometria.
+// Rampa configurable: mantiene legibles las nubes al atardecer y las oscurece
+// poco a poco hasta la noche. Solo afecta el RGB; no toca alfa ni geometria.
+float beta173CloudNightFloor() {
+    float ticks = mod(float(worldTime), 24000.0);
+    float dusk = smoothstep(BETA_CLOUD_DUSK_START_TICK, BETA_CLOUD_DUSK_END_TICK, ticks);
+    return mix(BETA_CLOUD_DUSK_MIN_DAYLIGHT, BETA_CLOUD_NIGHT_MIN_DAYLIGHT, dusk);
+}
+
 float beta173CloudDaylight() {
-    return max(beta173DayFactor(), BETA_CLOUD_NIGHT_MIN_DAYLIGHT);
+    return max(beta173DayFactor(), beta173CloudNightFloor());
 }
 
 vec3 beta173CloudColor() {

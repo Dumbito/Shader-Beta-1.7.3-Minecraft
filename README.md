@@ -27,8 +27,8 @@
 
 **Parche de mantenimiento sobre la versión estable v1.0.0.** Conserva la geometría nativa predeterminada y la malla Beta experimental: no cambia la forma, la altura ni la velocidad de desplazamiento de las nubes.
 
-- Añade `BETA_CLOUD_NIGHT_MIN_DAYLIGHT` (predeterminado `0.12`), ajustable desde **Shader Pack Settings**. Modifica solamente el RGB: evita que el color de las nubes se confunda con el cielo oscuro.
-- No introduce un cambio brusco en los ticks 12 000 o 13 000. La respuesta sigue la curva celeste y continúa de forma gradual por anochecer, noche y amanecer.
+- Añade una rampa configurable para el color RGB nocturno desde **Shader Pack Settings**: el mínimo al atardecer es `0.60` y baja progresivamente hasta `0.12` a medianoche, por defecto entre los ticks `12000` y `18000`.
+- No introduce un cambio brusco en los ticks 12 000 o 13 000: `smoothstep` gradúa la transición. La nube continúa oscureciéndose durante la noche, pero no desaparece por una condición horaria de alfa.
 - La opacidad no se vincula al reloj: el modo estable conserva `cloudColor.a`; la geometría experimental conserva `mask.a`. No se agrega ningún recorte de alfa por hora.
 - Añade pruebas de regresión para ticks críticos (12 000, 13 000, noche profunda, amanecer y retorno a 0) y para la opacidad de ambas rutas.
 
