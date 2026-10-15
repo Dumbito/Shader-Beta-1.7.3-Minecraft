@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "dev.beta173.climatebridge.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ClimateUniformMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
