@@ -146,6 +146,10 @@ jobs:
           set -euo pipefail
           test -f /tmp/beta173-shaderpack/Beta173-Lighting-0.9.0-universal-experimental.zip
           test -f /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar
+          # Another publishing workflow may have advanced main while these jobs ran.
+          # Rebase asset publication on the latest main to avoid a non-fast-forward push.
+          git fetch origin main
+          git reset --hard origin/main
           cp /tmp/beta173-shaderpack/Beta173-Lighting-0.9.0-universal-experimental.zip .
           cp /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar Beta173-Climate-Bridge-0.1.0-experimental.jar
           git config user.name "github-actions[bot]"
@@ -156,4 +160,4 @@ jobs:
             exit 0
           fi
           git commit -m "build(v0.9): publish universal climate experimental artifacts [skip ci]"
-          git push
+          git push origin HEAD:main
