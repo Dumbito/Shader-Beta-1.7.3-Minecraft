@@ -173,7 +173,7 @@ class BuildPackTests(unittest.TestCase):
                 self.assertIn("shaders/textures/starmap.png", names)
                 self.assertFalse([n for n in names if n.startswith("shaders/lib/")])
                 for n in names:
-                    if n.endswith((".vsh", ".fsh")):
+                    if n.endswith((".vsh", ".fsh", ".gsh")):
                         text = zf.read(n).decode("utf-8")
                         self.assertNotIn("#include", text, n)
                         self.assertTrue(text.startswith("#version 330 compatibility"), n)
@@ -194,7 +194,7 @@ class BuildPackTests(unittest.TestCase):
     def test_every_source_include_exists(self):
         import re
         for path in (ROOT / "shaders").rglob("*"):
-            if path.suffix in {".vsh", ".fsh", ".glsl"}:
+            if path.suffix in {".vsh", ".fsh", ".gsh", ".glsl"}:
                 for inc in re.findall(r'#include "([^"]+)"', path.read_text(encoding="utf-8")):
                     self.assertTrue((ROOT / "shaders" / inc.lstrip("/")).is_file(), f"{path.name} -> {inc}")
 
