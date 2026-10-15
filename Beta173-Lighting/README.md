@@ -91,7 +91,7 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 - La lectura de `level.dat` solo funciona si la semilla está incluida en ese archivo. Para servidores o mundos con datos ocultos, usa `--seed` o el modo interactivo.
 - La comprobación del ZIP y las pruebas automáticas no sustituyen la revisión visual con la versión concreta de Minecraft, Iris y Sodium.
 
-La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. Como seguimiento, se recomienda ampliar las pruebas en semillas, coordenadas y condiciones meteorológicas adicionales; eso no impide que v0.9.0 sea la versión oficial.
+La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. La matriz diferencial se amplía ahora en v1.0.0; la aprobación visual histórica de v0.9.0 no debe interpretarse como certificación visual de todas las combinaciones de la versión nueva.
 
 ## Versión oficial v1.0.0
 
