@@ -10,6 +10,7 @@ uniform vec3 cameraPosition;
 uniform ivec3 cameraPositionInt;
 uniform vec3 cameraPositionFract;
 uniform vec3 eyePosition;
+uniform vec3 relativeEyePosition;
 
 uniform int worldTime;
 uniform float rainStrength;
@@ -114,10 +115,11 @@ float beta173SkyClimateTemperature() {
 #ifdef BETA_CLIMATE_USE_VARYING
     return beta173ClimateTemperatureVarying;
 #else
-    // Reconstruye la posición X/Z de la cabeza del jugador desde el origen entero/fraccional
-    // de la cámara y la diferencia camera->eye. Reduce errores en tercera persona y a distancias largas.
+    // cameraPositionInt + cameraPositionFract recuperan la posición exacta de cámara.
+    // relativeEyePosition es (camera - cabeza); restarlo obtiene la posición de cabeza
+    // sin restar dos coordenadas de cámara que podrían usar un origen distinto tras un reset.
     vec2 cameraWorldXZ = vec2(cameraPositionInt.xz) + cameraPositionFract.xz;
-    vec2 playerWorldXZ = cameraWorldXZ + (eyePosition.xz - cameraPosition.xz);
+    vec2 playerWorldXZ = cameraWorldXZ - relativeEyePosition.xz;
     vec2 playerXZ = floor(playerWorldXZ);
     return beta173ClimateTemperature(playerXZ);
 #endif

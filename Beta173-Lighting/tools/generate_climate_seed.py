@@ -41,8 +41,9 @@ class JavaRandom:
         while True:
             bits = self.next_bits(31)
             value = bits % bound
-            # java.util.Random comprueba overflow signed-int en esta expresion.
-            if bits - value + (bound - 1) < (1 << 31):
+            # Replica el overflow de int con signo de java.util.Random.nextInt.
+            expression = (bits - value + (bound - 1)) & 0xFFFFFFFF
+            if expression < (1 << 31):
                 return value
 
 
