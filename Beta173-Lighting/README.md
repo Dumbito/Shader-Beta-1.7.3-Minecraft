@@ -1,10 +1,8 @@
-# Beta173 Lighting v0.9.1 — campo climático universal y geometría de nubes Beta (versión oficial)
+# Beta173 Lighting v1.0.0 — primera versión estable oficial
 
-> **Aviso de compatibilidad de nubes (v0.9.1):** se ha reportado que la geometría custom puede verse transparente, como un marco blanco o con zonas interiores ausentes en algunas combinaciones de Minecraft/Iris/Sodium. La causa probable es que el geometry shader distribuye 840 caras según `gl_PrimitiveIDIn * 16`, una estrategia que no garantiza el mismo número de invocaciones si el motor divide la geometría en distintos draws.
->
-> En esta rama correctiva, la geometría reconstruida se conserva como opción **experimental** pero queda **desactivada por defecto**. El modo predeterminado pasa la malla nativa del juego y conserva su alfa. Hasta que se publique un ZIP corregido, los usuarios del paquete oficial 0.9.1 pueden abrir **Shader Pack Settings** y desactivar **BETA_CUSTOM_CLOUD_GEOMETRY** (o la opción de geometría Beta de nubes). Esta corrección aún requiere confirmación visual en el entorno real y no debe considerarse un lanzamiento oficial.
+> **Perfil estable v1.0.0:** la geometría nativa de Minecraft se conserva por defecto para maximizar la compatibilidad con Iris/Sodium. La geometría de nubes Beta personalizada queda como opción experimental, activable desde Shader Pack Settings. El paquete incluye una matriz diferencial contra una referencia Java de Beta 1.7.3; la suite valida fórmulas y paquete, pero no simula todas las rutas del renderer.
 
-Shaderpack para Iris con fallback climático universal, port del ruido histórico de Beta 1.7.3 mediante el Climate Bridge opcional y reconstrucción de geometría de nubes Beta. **v0.9.1 es la versión oficial publicada.** La suite automatizada valida el paquete y enlaza los programas GLSL, incluida la etapa geometry; la geometría de nubes todavía requiere comprobación visual dentro de la instancia exacta de Minecraft/Iris/Sodium.
+Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 es la primera versión estable oficial.**
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
@@ -20,7 +18,7 @@ La ruta heredada de ZIP específico por semilla sigue disponible para mundos don
 
 ## Descargas oficiales
 
-- [**ZIP oficial v0.9.1 — instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.1.zip): clima universal con fallback automático y geometría de nubes Beta seleccionable desde Shader Pack Settings.
+- [**ZIP oficial v1.0.0 — primera versión estable, instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip): clima universal con fallback automático; la geometría nativa de nubes es predeterminada y la malla Beta custom queda como opción experimental.
 - [**ZIP universal v0.9.0 — versión oficial anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip): fallback por temperatura del bioma si el bridge no está activo; sin el bridge, no simula el ruido espacial histórico de Beta.
 - [**Beta173 Climate Bridge 0.1.0 — Fabric 26.3 (opcional)**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar): port del ruido histórico mediante el uniforme `temperature` de Iris.
 - [**ZIP base v0.9.0-pre1 — instalable**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip): paquete general con fallback seguro; no activa una tabla climática de una semilla ajena.
@@ -87,28 +85,41 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 
 ## Precisión y limitaciones
 
-- **Campo climático histórico:** v0.9.1 elimina el valor neutral fijo. El ZIP universal usa la temperatura del bioma que proporciona Iris como fallback, sin configuración manual. Para reconstruir el campo espacial de Beta se puede instalar Beta173 Climate Bridge: en un mundo de un jugador obtiene automáticamente la semilla y calcula el ruido en Java. En multijugador remoto, el servidor debe instalar el bridge y activar explícitamente `shareWorldSeed=true`; por privacidad, se encuentra desactivado de forma predeterminada.
-- **Ruta ZIP específica de semilla:** también continúa disponible para quien no quiera usar el bridge. La herramienta `configure_climate_pack.py` genera los offsets/texturas dentro de una carpeta temporal y construye un paquete separado; no es necesario editar los fuentes a mano. El modo de lectura de `level.dat` depende de que el archivo incluya la semilla; si no la contiene, se puede indicar con `--seed` o mediante el modo interactivo.
-- **Precisión numérica y renderer:** el bridge reconstruye el campo climático mediante Java y puede reproducir la conversión HSB histórica; la salida final, sin embargo, sigue pasando por el pipeline moderno. La ruta heredada que calcula el ruido en GLSL emplea `float` donde Java usa `double`, así que esa ruta no garantiza igualdad bit a bit.
-- **Coordenadas de cámara:** la ruta GLSL específica de semilla utiliza `cameraPositionInt` y `cameraPositionFract` para reducir los problemas de precisión en mundos grandes. Esta ruta no debe confundirse con el cálculo climático que proporciona el bridge.
-- **Geometría de nubes:** la malla personalizada de Beta forma parte del ZIP oficial v0.9.1 y puede desactivarse desde **Shader Pack Settings** para volver a la geometría moderna. Aunque el geometry shader enlace correctamente, la comprobación visual de cobertura, clipping, transparencia, profundidad y desplazamiento debe hacerse en la combinación real de Minecraft/Iris/Sodium.
-- **Pruebas:** la suite automatizada, la integridad del ZIP y la compilación GLSL detectan regresiones estructurales, pero no simulan todo el renderer ni todas las semillas, coordenadas, dimensiones, horas o condiciones meteorológicas.
+- La implementación reproduce el orden de inicialización de `java.util.Random`, los cuatro offsets/permutaciones, el muestreo de gradientes, las escalas/amplitudes de las octavas y el método Simplex 2D de Beta 1.7.3.
+- Para las coordenadas se usa `cameraPositionInt` con `cameraPositionFract` de Iris y la corrección entre la cámara y la posición de los ojos. Esto evita depender del uniforme `cameraPosition`, que puede reiniciarse para limitar errores de precisión.
+- El port en GLSL usa `float`, mientras que Java utiliza `double`. La reproducción matemática es estructuralmente fiel, pero no se garantiza igualdad bit a bit y pequeñas diferencias pueden cambiar un canal cerca de un umbral de cuantización.
+- La lectura de `level.dat` solo funciona si la semilla está incluida en ese archivo. Para servidores o mundos con datos ocultos, usa `--seed` o el modo interactivo.
+- La comprobación del ZIP y las pruebas automáticas no sustituyen la revisión visual con la versión concreta de Minecraft, Iris y Sodium.
 
-La prueba visual manual aprobada corresponde a v0.9.0. La nueva geometría de nubes incluida en v0.9.1 requiere su propia validación visual; las pruebas automatizadas no deben presentarse como si esa validación ya se hubiera completado.
+La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. La matriz diferencial se amplía ahora en v1.0.0; la aprobación visual histórica de v0.9.0 no debe interpretarse como certificación visual de todas las combinaciones de la versión nueva.
 
-## Versión oficial v0.9.1
+## Versión oficial v1.0.0
 
-Descarga `Beta173-Lighting-0.9.1.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. La geometría de nubes Beta se configura con `BETA_CUSTOM_CLOUD_GEOMETRY` desde **Shader Pack Settings**: desactívala para volver a la malla moderna si observas problemas en tu versión de Iris. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
+Descarga `Beta173-Lighting-1.0.0.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. La geometría de nubes Beta se configura con `BETA_CUSTOM_CLOUD_GEOMETRY` desde **Shader Pack Settings**; está desactivada por defecto. Actívala únicamente para probar la malla reconstruida de forma experimental; desactívala para volver a la malla moderna estable. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
 
-## Geometría de nubes Beta 1.7.3 (v0.9.1)
+## Geometría de nubes Beta 1.7.3 (v1.0.0)
 
-La geometría personalizada ya forma parte del ZIP oficial v0.9.1. Utiliza la máscara original `environment/clouds.png`, una cuadrícula de 6×6 celdas de 96×96 bloques, subdivisiones laterales de 12 bloques, 4 bloques de grosor, desplazamiento de 0.03 bloques por tick y sombreado histórico 1.0/0.7/0.9/0.8. La malla se genera en `gbuffers_clouds.gsh` dentro del pase de nubes para conservar el test de profundidad con el terreno.
+La geometría personalizada se conserva como modo experimental en v1.0.0 y está desactivada por defecto para evitar problemas de particionado de draws en algunas versiones de Iris. Utiliza la máscara original `environment/clouds.png`, una cuadrícula de 6×6 celdas de 96×96 bloques, subdivisiones laterales de 12 bloques, 4 bloques de grosor, desplazamiento de 0.03 bloques por tick y sombreado histórico 1.0/0.7/0.9/0.8. La malla se genera en `gbuffers_clouds.gsh` dentro del pase de nubes para conservar el test de profundidad con el terreno.
 
 La opción `BETA_CUSTOM_CLOUD_GEOMETRY` está expuesta en **Shader Pack Settings**. Desactívala para usar la geometría moderna del motor como fallback, sin editar el código fuente.
 
 La automatización valida las pruebas de regresión, la integridad del ZIP y el enlace GLSL de vertex, geometry y fragment. Esto verifica la compatibilidad estructural del shader, pero **no sustituye una comprobación visual en Minecraft**: deben revisarse la cobertura completa de nubes, el clipping, la transparencia, la profundidad y el movimiento en la combinación real de Minecraft/Iris/Sodium. El modelo reconstruye el resultado visible, no la llamada OpenGL separada de depth-only del renderer antiguo.
 
 PR de implementación: [#15 — geometría de nubes Beta](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/pull/15).
+
+## Matriz diferencial v1.0.0
+
+La nueva prueba `tests/test_v10_java_differential.py` compila la referencia Java del directorio `tests/reference` y compara el comportamiento con las funciones Python/GLSL equivalentes. El conjunto incluye:
+
+| Área | Cobertura de la matriz |
+|---|---:|
+| Ruido Simplex de cuatro octavas | 144 casos de semillas y coordenadas, incluidas coordenadas negativas y límites de enteros |
+| Temperatura y conversión HSB/RGB | 14 casos cerca de límites de temperatura y sectores |
+| Color del cielo | 1.540 casos: cuatro semillas, cinco posiciones, once horas y siete combinaciones de lluvia/tormenta |
+| Ciclo celeste, tiempo parcial, resta de luz y estrellas | 560 combinaciones de hora, tiempo parcial y clima |
+| Curva de brillo | 32 niveles para los perfiles de luz ambiental relevantes |
+
+Se ejecuta una JVM de referencia real en CI, en lugar de comparar únicamente dos fórmulas transcritas a Python. Las tolerancias se fijan de manera explícita porque Java y GLSL no hacen todas las operaciones con el mismo tipo numérico ni usan la misma implementación trigonométrica. La prueba certifica las relaciones numéricas incluidas en su matriz, no una equivalencia visual exacta en todos los sistemas.
 
 ## Pruebas
 
@@ -121,10 +132,10 @@ python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
 Las pruebas de ruido y generación de activos cubren la reproducibilidad de `java.util.Random`, valores de regresión, construcción del mapa de gradientes, lectura de semilla NBT y la generación temporal del paquete. Las pruebas no simulan el renderizador completo de Minecraft.
 
 
-## Validación de la versión oficial v0.9.1
+## Validación y matriz diferencial de la versión oficial v1.0.0
 
 - [Workflow universal de pruebas y empaquetado](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml): suite Python, construcción del ZIP, integridad y enlace GLSL.
 - [Workflow del Climate Bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/build-climate-bridge.yml): compilación y pruebas automatizadas del mod.
-- [Checksum SHA-256 de la versión oficial](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/SHA256SUMS-v0.9.1.txt).
+- [Checksum SHA-256 de la versión oficial](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/SHA256SUMS-v1.0.0.txt).
 
-**Prueba visual manual:** completada y aprobada por el autor dentro de Minecraft. Como control de calidad continuo, se recomienda probar nuevas semillas, transiciones de bioma y condiciones de clima. Esto es compatible con el estado oficial de v0.9.0 y no equivale a garantizar paridad píxel a píxel.
+**Alcance visual:** la prueba visual manual aprobada por el autor corresponde a v0.9.0. La matriz diferencial v1.0.0 compara fórmulas con Java; no demuestra identidad visual. La geometría custom de nubes permanece desactivada por defecto y requiere comprobación visual adicional si se activa en Shader Pack Settings.
