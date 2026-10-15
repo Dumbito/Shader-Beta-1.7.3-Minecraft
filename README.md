@@ -7,6 +7,8 @@
 
 <p align="center">
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía v0.9.0-pre1</a> ·
   <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
@@ -16,7 +18,7 @@
 
 ## 🧪 v0.9.0-pre1 — reconstrucción del campo climático de Beta 1.7.3
 
-**Estado: experimental. La descarga estable sigue siendo v0.8.1.** La reconstrucción climática está en `main`, pero todavía necesita verificación visual en Minecraft antes de poder llamarse un lanzamiento estable. No existe un ZIP universal preconfigurado para todos los mundos: la permutación histórica del ruido depende de la semilla de cada mundo.
+**Estado: v0.9.0-pre1 experimental; v0.8.1 sigue siendo la versión estable anterior.** Ya están publicados dos archivos: el [ZIP base instalable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip), que mantiene el fallback neutral hasta conocer la semilla, y el [kit generador climático](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip), que crea un ZIP específico para tu mundo sin editar código. Iris no ofrece un uniforme estándar con la semilla; por eso no hay una configuración climática exacta universal. Aunque las pruebas automatizadas y el empaquetado pasen, la v0.9 necesita validación visual dentro de Minecraft antes de ser declarada estable.
 
 La nueva ruta evita usar el uniforme moderno `temperature` como sustituto. Reconstruye la cadena histórica:
 
