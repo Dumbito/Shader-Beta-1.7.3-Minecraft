@@ -2,6 +2,21 @@
 
 Shaderpack experimental para Iris que reconstruye la temperatura espacial que Beta 1.7.3 usa para colorear el cielo. **La descarga estable del proyecto sigue siendo v0.8.1**; esta preversión debe probarse visualmente en Minecraft antes de considerarse un lanzamiento.
 
+## Descargas v0.9
+
+- [**ZIP base v0.9.0-pre1 — instalable**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip): paquete general con fallback seguro; no activa una tabla climática de una semilla ajena.
+- [**Kit generador climático v0.9**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip): fuentes y herramienta para crear automáticamente el ZIP específico de tu mundo.
+- [**v0.8.1 — estable anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
+
+Para usar el port climático reconstruido, descarga y extrae el kit; después ejecuta desde una terminal:
+
+```bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo" --output-dir "$HOME/Descargas"
+```
+
+También puedes usar `--seed NUMERO` (la semilla de `/seed`) o ejecutar el comando sin opciones para que la herramienta la solicite. El kit no se instala como shaderpack: la herramienta genera el ZIP final por semilla, listo para colocarlo en `shaderpacks`. No es necesario editar GLSL ni copiar texturas manualmente.
+
+
 ## Qué reconstruye
 
 La cadena histórica está compuesta por:
