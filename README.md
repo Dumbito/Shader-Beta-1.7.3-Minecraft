@@ -14,7 +14,7 @@
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar">Descargar Climate Bridge 0.1.0 (Fabric 26.3)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático por semilla</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml">Pruebas y compilación del candidato universal</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml">Pruebas y publicación de v1.0.0</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía de v1.0.0</a> ·
   <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
@@ -142,7 +142,7 @@ El resultado es una reconstrucción progresiva, no una afirmación de equivalenc
 - [Qué proyectos y tecnologías utilizamos](#-qué-proyectos-y-tecnologías-utilizamos)
 - [Cómo trasladamos Beta a un motor moderno](#-cómo-trasladamos-beta-a-un-motor-moderno)
 - [Los sistemas que reconstruimos](#-los-sistemas-que-reconstruimos)
-- [Historia completa: v0.1–v1.0.0](#-historia-completa-v01v090)
+- [Historia completa: v0.1–v1.0.0](#-historia-completa-v01v100)
 - [Arquitectura del repositorio](#-arquitectura-del-repositorio)
 - [Configuración](#️-configuración)
 - [Instalación](#-instalación)
@@ -348,7 +348,7 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 | **v0.7.2** | Ciclo de color de nubes | Refina la respuesta de color histórica de las nubes ante día, lluvia y tormenta y restaura la salida RGBA de estrellas observada en la referencia. La geometría y la máscara de las nubes siguen procediendo del motor moderno. |
 | **v0.8** | Estrellas de Beta y paquete reproducible | Genera un mapa de estrellas a partir de la rutina histórica, lo integra en el shader del cielo, refina la cobertura de estrellas y el oscurecimiento nocturno de nubes, implementa el sombreado y color de nube inspirados en Beta e incorpora un empaquetador que resuelve los <code>#include</code>. |
 | **v0.8.1** | Niebla por dimensión y altura de nubes | Separa las rutas de niebla y luz ambiental de Overworld, Nether y End; el End puede usar parámetros de niebla nativos de Iris. Remapea la altura de las nubes a Y=260,99 para el rango moderno. Fue la versión estable anterior a v0.9.0. |
-| **v0.9.0** | Campo climático universal y Climate Bridge | Publica un shaderpack universal con fallback automático por bioma y un mod opcional que reconstruye el ruido espacial dependiente de la semilla de Beta 1.7.3 sin editar GLSL a mano. CI, empaquetado e integridad validados; la prueba visual manual fue completada y aprobada por el autor. El port conserva limitaciones numéricas entre `double` de Java y `float` de GLSL. |
+| **v1.0.0** | Primera versión estable | Amplía la validación diferencial con una referencia Java ejecutable para ruido climático, conversión HSB/RGB, color del cielo, ciclo celeste, meteorología, estrellas y curva de brillo. Corrige el perfil de nubes para que la geometría nativa sea la opción predeterminada y la malla Beta custom sea experimental. CI aprobada para pruebas, ZIP, etapas GLSL y Climate Bridge; no se afirma paridad píxel a píxel. |\n| **v0.9.0** | Campo climático universal y Climate Bridge | Publica un shaderpack universal con fallback automático por bioma y un mod opcional que reconstruye el ruido espacial dependiente de la semilla de Beta 1.7.3 sin editar GLSL a mano. CI, empaquetado e integridad validados; la prueba visual manual fue completada y aprobada por el autor. El port conserva limitaciones numéricas entre `double` de Java y `float` de GLSL. |
 
 ### La evolución en cuatro etapas
 
@@ -360,12 +360,12 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 
 **Etapa IV — diferencias entre dimensiones y altura moderna (v0.8.1).** El foco se desplaza a las propiedades que varían por dimensión y a la altura de las nubes en un mundo con rango vertical moderno. La compatibilidad no se resuelve solo con fórmulas históricas: también requiere utilizar correctamente los parámetros de Iris.
 
-**Etapa V — campo climático universal (v0.9.0).** Se reconstruye el ruido espacial de Beta y se ofrece un fallback automático para mundos sin semilla disponible. El Climate Bridge permite obtener la semilla del mundo localmente y, en multijugador, solo cuando el servidor decide compartirla.
+**Etapa V — campo climático universal (v0.9.0).** Se reconstruye el ruido espacial de Beta y se ofrece un fallback automático para mundos sin semilla disponible. El Climate Bridge permite obtener la semilla del mundo localmente y, en multijugador, solo cuando el servidor decide compartirla.\n\n**Etapa VI — validación estable (v1.0.0).** Se añade una referencia Java ejecutable que compara las fórmulas en una matriz amplia de semillas, coordenadas límite, horas, tiempos parciales y clima. El paquete estable conserva las nubes nativas por defecto para reducir incompatibilidades y deja la geometría reconstruida como experimento.
 
 ### Documentos y artefactos de versión
 
 - [Paquete v0.8 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.zip)
-- [Paquete oficial v0.9.1 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.1.zip) - [Paquete v0.9.0 anterior](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip)
+- [Paquete oficial v1.0.0 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip)\n- [Paquete histórico v0.9.1 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.1.zip)\n- [Paquete histórico v0.9.0 anterior](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip)
 - [Paquete v0.8.1 anterior en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip)
 - [Release v0.8](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.8)
 - [Release v0.7.2](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2)
