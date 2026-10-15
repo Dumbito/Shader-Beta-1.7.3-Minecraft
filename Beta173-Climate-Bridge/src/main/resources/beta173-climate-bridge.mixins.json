@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.dumbito.beta173climate.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "BiomeUniformsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

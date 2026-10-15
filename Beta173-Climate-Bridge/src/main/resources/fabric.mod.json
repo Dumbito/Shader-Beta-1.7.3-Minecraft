@@ -3,36 +3,26 @@
   "id": "beta173_climate_bridge",
   "version": "${version}",
   "name": "Beta173 Climate Bridge",
-  "description": "Optionally supplies the original Beta 1.7.3 climate color to Iris when raw world seed access is available.",
-  "environment": "*",
-  "authors": [
-    "Beta173 Lighting contributors"
-  ],
+  "description": "Supplies Beta 1.7.3's seed-based climate temperature to Iris' existing temperature uniform.",
+  "authors": ["Dumbito"],
   "contact": {
     "homepage": "https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft",
-    "sources": "https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft"
+    "sources": "https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Climate-Bridge"
   },
+  "license": "MIT",
+  "environment": "*",
   "entrypoints": {
-    "main": [
-      "dev.beta173.climatebridge.Beta173ClimateBridge"
-    ],
-    "client": [
-      "dev.beta173.climatebridge.Beta173ClimateBridgeClient"
-    ]
+    "main": ["com.dumbito.beta173climate.Beta173ClimateBridge"],
+    "client": ["com.dumbito.beta173climate.Beta173ClimateBridgeClient"]
   },
-  "mixins": [
-    {
-      "config": "beta173-climate-bridge.client.mixins.json",
-      "environment": "client"
-    }
-  ],
+  "mixins": ["beta173-climate-bridge.mixins.json"],
   "depends": {
     "fabricloader": ">=0.19.5",
-    "minecraft": "~26.3",
+    "minecraft": "26.3",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": ">=0.162.0"
   },
-  "recommends": {
+  "suggests": {
     "iris": ">=1.11.6"
   }
 }

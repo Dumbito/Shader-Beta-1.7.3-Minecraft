@@ -1,63 +1,68 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
 }
 
-version = project.mod_version
 group = project.maven_group
-
+version = project.mod_version
 base {
     archivesName = project.archives_base_name
 }
 
 repositories {
-    maven {
-        name = "Fabric"
-        url = "https://maven.fabricmc.net/"
-    }
     exclusiveContent {
         forRepository {
             maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
             }
         }
-        filter {
-            includeGroup "maven.modrinth"
-        }
+        filter { includeGroup 'maven.modrinth' }
     }
 }
 
 loom {
     splitEnvironmentSourceSets()
     mods {
-        "beta173-climate-bridge" {
+        "beta173_climate_bridge" {
             sourceSet sourceSets.main
             sourceSet sourceSets.client
         }
+    }
+    mixin {
+        defaultRefmapName = 'beta173-climate-bridge.refmap.json'
     }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    // Iris Extension 26.3 uses implementation for Loader/Iris in this Loom setup.
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    implementation "maven.modrinth:YL57xq9U:bAdKrpw8"
+    modCompileOnly "maven.modrinth:iris:${project.iris_version}"
+
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 processResources {
-    inputs.property "version", project.version
-    filesMatching("fabric.mod.json") {
-        expand "version": inputs.properties.version
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 25
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand 'version': project.version }
 }
 
 java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    from('LICENSE') { rename { "${it}_${project.archives_base_name}" } }
 }
