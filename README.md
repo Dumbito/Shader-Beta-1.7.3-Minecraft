@@ -14,30 +14,56 @@
 
 ---
 
-## 🧪 v0.9.0-pre1 — campo climático reconstruido desde Beta 1.7.3
+## 🧪 v0.9.0-pre1 — reconstrucción del campo climático de Beta 1.7.3
 
-**Estado: preversión experimental en las fuentes de la rama principal. La descarga estable sigue siendo v0.8.1.** No hay un ZIP universal v0.9 preparado para instalar: el campo climático depende de la semilla exacta del mundo y debe generarse antes de empaquetar.
+**Estado: experimental. La descarga estable sigue siendo v0.8.1.** La reconstrucción climática está en `main`, pero todavía necesita verificación visual en Minecraft antes de poder llamarse un lanzamiento estable. No existe un ZIP universal preconfigurado para todos los mundos: la permutación histórica del ruido depende de la semilla de cada mundo.
 
-Esta iteración aborda la limitación de temperatura mediante la ruta histórica completa, no usando el uniforme moderno de Iris como sustituto:
+La nueva ruta evita usar el uniforme moderno \`temperature\` como sustituto. Reconstruye la cadena histórica:
 
-- Port de la secuencia de `java.util.Random`, los offsets y las permutaciones de las cuatro octavas de `NoiseGeneratorOctaves2`.
-- Port a GLSL del ruido Simplex 2D de `NoiseGenerator2`, con una textura RGBA8 de lookup generada para una semilla concreta.
-- Evaluación en las coordenadas X/Z del jugador, usando los componentes de cámara de Iris para reducir errores de precisión y diferencias entre cámara y posición de los ojos.
-- Conversión HSB basada en `BiomeGenBase.getSkyColorByTemp`, incluyendo la cuantización RGB de 8 bits de Java, antes de conservar la atenuación diurna y meteorológica.
+- \`World.getSkyColor(x,z)\` pide la temperatura espacial en las coordenadas X/Z del jugador.
+- \`WorldChunkManager.getTemperature\` combina cuatro octavas de \`NoiseGeneratorOctaves2\`, inicializadas desde \`new Random(worldSeed * 9871L)\`.
+- Cada \`NoiseGenerator2\` aporta offsets, la permutación de \`java.util.Random\`, los gradientes Simplex 2D y las ponderaciones históricas por octava.
+- \`BiomeGenBase.getSkyColorByTemp\` aplica HSB y cuantiza cada canal RGB a 8 bits como Java; después continúan la atenuación diurna, la lluvia y la tormenta portadas en versiones anteriores.
 
-### Cómo construir una versión para tu mundo
+### Crear tu ZIP climático sin editar líneas de código
 
-1. Entra al mundo y ejecuta `/seed`.
-2. Desde la raíz del repositorio, genera los recursos con la semilla exacta:
-   
-       python3 Beta173-Lighting/tools/generate_climate_seed.py --seed SEMILLA_REAL
-       python3 Beta173-Lighting/tools/build_pack.py 0.9.0-pre1
+Elige la forma más cómoda. No es necesario abrir ni modificar archivos GLSL, ni reemplazar texturas manualmente.
 
-3. Copia el ZIP generado a la carpeta `shaderpacks` de esa instancia y prueba el cielo a distintas coordenadas y horas.
+**A. Leer la semilla desde un mundo local**
 
-Reemplaza `SEMILLA_REAL` por el número de `/seed`, incluido el signo menos si lo hay. El ZIP resultante es específico de ese mundo: genera otra vez los recursos al cambiar de semilla. El generador modifica el PNG y `climate_seed.glsl` dentro de las fuentes; no publiques esos archivos personalizados si prefieres mantener privada la semilla de tu mundo.
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo"
+\`\`\`
 
-**Importante:** Iris no expone la semilla del mundo como un uniforme estándar. GLSL usa `float` mientras el código original utilizaba `double`; la reconstrucción matemática no garantiza igualdad bit a bit. Además, la compilación GLSL completa y la comprobación visual en Minecraft siguen pendientes. La preversión no debe tratarse como un release validado.
+Pasa la carpeta del mundo o directamente su archivo \`level.dat\`. La herramienta intenta extraer \`Data.WorldGenSettings.seed\` en mundos modernos y \`Data.RandomSeed\` en formatos clásicos.
+
+**B. Usar el número de \`/seed\`**
+
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789
+\`\`\`
+
+Sustituye \`123456789\` por la semilla exacta de tu mundo, incluido el signo si es negativa. Esta opción es útil en servidores o cuando el archivo local no contiene la semilla.
+
+**C. Dejar que la herramienta la pida**
+
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py
+\`\`\`
+
+Copia el número que muestra \`/seed\` cuando aparezca la solicitud.
+
+Por defecto, el ZIP se guarda en el directorio actual. Para indicar una carpeta, añade por ejemplo \`--output-dir "$HOME/Descargas"\`. La herramienta trabaja sobre una copia temporal: genera la tabla climática y los offsets, configura la textura Iris y construye/valida el ZIP sin modificar los archivos originales del repositorio. El nombre del ZIP incluye la semilla para distinguirlo.
+
+Instala el ZIP resultante en la carpeta \`shaderpacks\` de la instancia con la que juegas **ese mismo mundo**. Al cambiar de mundo con una semilla distinta, genera otro ZIP con esa semilla.
+
+### Qué está reconstruido y qué falta validar
+
+La estructura del ruido, sus cuatro octavas, la inicialización de aleatoriedad, la tabla de gradientes y la conversión histórica del color están implementadas. El cálculo usa las coordenadas enteras de cámara no desplazadas que expone Iris y recupera la fracción de posición, lo que evita depender del uniforme \`cameraPosition\` que se reinicia para mantener precisión.
+
+Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con \`double\`, mientras que el shader usa \`float\`; los errores de precisión pueden importar cerca de los límites de cuantización RGB. La validación matemática y el empaquetado deben complementarse con una prueba visual en el cliente, en varias coordenadas, horas y condiciones meteorológicas. La versión estable descargable continúa siendo v0.8.1 hasta completar esa validación.
+
+---
 
 ## 🌌 ¿Qué es Beta173 Lighting?
 
@@ -431,7 +457,7 @@ Las pruebas de estrellas, nubes y niebla necesitan una última evaluación en el
 - **Propagación de luz:** un shader no reemplaza los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. La reconstrucción actúa sobre los datos que ya expone el motor moderno.
 - **Lightmap moderno:** las coordenadas del lightmap actual solo pueden convertirse de forma aproximada en los niveles históricos de Beta. La correspondencia no implica que las dos simulaciones de iluminación sean idénticas.
 - **Interpolación temporal:** determinadas funciones históricas recibían fracciones de tick o datos del motor que no siempre están disponibles de la misma forma en el shader.
-- **Campo climático (v0.9.0-pre1):** la fuente ya reconstruye el ruido de cuatro octavas y la conversión HSB de Beta, pero requiere generar la textura y los offsets con la semilla real. Sin personalizar los recursos, mantiene el respaldo neutral. No está validada visualmente; la precisión float de GLSL y el origen de cámara deben comprobarse en juego.
+- **Campo climático (v0.9.0-pre1):** el ZIP debe construirse para la semilla del mundo mediante `tools/configure_climate_pack.py`. La estructura reproduce las cuatro octavas y la cuantización HSB histórica, pero el shader usa `float`, por lo que no se garantiza igualdad bit a bit. La apariencia aún requiere validación visual en Minecraft.
 - **Sol y luna:** el proyecto se centra en el cielo, las estrellas y la niebla; no reconstruye de forma completa la geometría, el movimiento o las fases de los cuerpos celestes históricos.
 - **Geometría de nubes:** las nubes utilizan la geometría del motor moderno; todavía no se ha reproducido íntegramente el sistema de celdas, desplazamiento y múltiples pasadas de Beta.
 - **Altura de nube:** Y=260,99 es una adaptación fija al rango vertical moderno; puede no ser ideal sobre todos los picos.
@@ -451,7 +477,7 @@ Las siguientes líneas representan trabajo potencial, no funciones que deban con
 - Revisar las diferencias entre la geometría de nubes de Beta y la geometría nativa moderna, sin romper la compatibilidad con Iris.
 - Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
 - Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
-- Validar el campo climático v0.9 con la semilla real en distintos biomas/coordenadas, comparar el color con la referencia Java y comprobar continuidad cuando cambie el origen de cámara.
+- Validar el campo climático v0.9 con semillas reales en distintas coordenadas, horas y condiciones meteorológicas, comparando el color con una referencia Java.
 - Probar sistemáticamente amanecer, mediodía, atardecer, noche, lluvia, tormenta y niebla en cada dimensión.
 - Documentar por versión las combinaciones de Minecraft, Iris y Sodium en las que se haya probado visualmente el shaderpack.
 - Mantener los perfiles de diagnóstico y el empaquetado reproducible para que futuras correcciones no deshagan las anteriores.

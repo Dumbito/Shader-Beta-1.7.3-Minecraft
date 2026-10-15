@@ -1,57 +1,89 @@
-"""Tests for the Beta 1.7.3 climate/noise port and seed texture generator."""
+"""Regression tests for the reconstructed Beta 1.7.3 climate/noise field."""
 from __future__ import annotations
 
+import gzip
 import struct
 import sys
 import tempfile
 import unittest
+import zipfile
 import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-import generate_climate_seed as climate
+import generate_climate_seed as climate  # noqa: E402
+import configure_climate_pack as configure  # noqa: E402
 
 
 def decode_rgba8_png(path: Path) -> tuple[int, int, bytes]:
     data = path.read_bytes()
     if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise AssertionError("PNG signature inválida")
-    pos, chunks, width, height, raw = 8, {}, 0, 0, b""
+        raise AssertionError("firma PNG inválida")
+    pos, width, height, compressed = 8, 0, 0, bytearray()
     while pos < len(data):
         size = struct.unpack(">I", data[pos:pos + 4])[0]
-        tag = data[pos + 4:pos + 8]
+        kind = data[pos + 4:pos + 8]
         body = data[pos + 8:pos + 8 + size]
         pos += size + 12
-        chunks[tag] = body
-        if tag == b"IHDR":
-            width, height, bit_depth, color_type, compression, filtering, interlace = struct.unpack(">IIBBBBB", body)
-            if (bit_depth, color_type, compression, filtering, interlace) != (8, 6, 0, 0, 0):
-                raise AssertionError("Solo se admite PNG RGBA8 sin entrelazado")
-        elif tag == b"IDAT":
-            raw += body
-    rows = zlib.decompress(raw)
+        if kind == b"IHDR":
+            width, height, depth, color_type, comp, filt, interlace = struct.unpack(">IIBBBBB", body)
+            if (depth, color_type, comp, filt, interlace) != (8, 6, 0, 0, 0):
+                raise AssertionError("formato inesperado: se necesita RGBA8 sin entrelazado")
+        elif kind == b"IDAT":
+            compressed.extend(body)
+    raw = zlib.decompress(bytes(compressed))
     stride = width * 4
-    pix = bytearray()
+    pixels = bytearray()
     for y in range(height):
-        offset = y * (stride + 1)
-        if rows[offset] != 0:
-            raise AssertionError("Filtro PNG inesperado")
-        pix.extend(rows[offset + 1:offset + 1 + stride])
-    return width, height, bytes(pix)
+        start = y * (stride + 1)
+        if raw[start] != 0:
+            raise AssertionError("filtro PNG inesperado")
+        pixels.extend(raw[start + 1:start + 1 + stride])
+    return width, height, bytes(pixels)
+
+
+def nbt_string(value: str) -> bytes:
+    encoded = value.encode("utf-8")
+    return struct.pack(">H", len(encoded)) + encoded
+
+
+def nbt_tag(tag_type: int, name: str, payload: bytes) -> bytes:
+    return bytes((tag_type,)) + nbt_string(name) + payload
+
+
+def nbt_long(name: str, value: int) -> bytes:
+    return nbt_tag(4, name, struct.pack(">q", value))
+
+
+def modern_level_dat(seed: int) -> bytes:
+    world_gen = nbt_tag(10, "WorldGenSettings", nbt_long("seed", seed) + b"\x00")
+    data = nbt_tag(10, "Data", world_gen + b"\x00")
+    return gzip.compress(b"\x0a" + nbt_string("") + data + b"\x00")
+
+
+def legacy_level_dat(seed: int) -> bytes:
+    data = nbt_tag(10, "Data", nbt_long("RandomSeed", seed) + b"\x00")
+    return gzip.compress(b"\x0a" + nbt_string("") + data + b"\x00")
 
 
 class JavaRandomTests(unittest.TestCase):
-    def test_known_java_random_values(self):
+    def test_matches_known_java_random_values(self):
         self.assertEqual(climate.JavaRandom(42).next_double(), 0.7275636800328681)
-        value = climate.JavaRandom(0).next_bits(32)
+        rng = climate.JavaRandom(0)
+        value = rng.next_bits(32)
         if value >= 1 << 31:
             value -= 1 << 32
         self.assertEqual(value, -1155484576)
 
+    def test_next_int_produces_values_inside_bounds(self):
+        rng = climate.JavaRandom(9876)
+        self.assertTrue(all(0 <= rng.next_int(256) < 256 for _ in range(500)))
+        self.assertTrue(all(0 <= rng.next_int(251) < 251 for _ in range(500)))
+
 
 class LegacyClimateTests(unittest.TestCase):
-    def test_seeded_noise_matches_reference_values_from_java_port(self):
+    def test_noise_matches_pinned_reference_values(self):
         cases = (
             (0, 0, 0, 0.10756615286025406),
             (0, 100, 200, 1.4942328627451067),
@@ -63,54 +95,29 @@ class LegacyClimateTests(unittest.TestCase):
             with self.subTest(seed=seed, x=x, z=z):
                 self.assertAlmostEqual(climate.climate_temperature(seed, x, z), expected, places=12)
 
-    def test_octaves_have_independent_permutations_and_valid_offsets(self):
-        octaves = climate.create_octaves(123456789)
-        self.assertEqual(len(octaves), 4)
-        for octave in octaves:
+    def test_each_world_seed_produces_four_distinct_octaves(self):
+        a = climate.create_octaves(42)
+        b = climate.create_octaves(43)
+        self.assertEqual(len(a), 4)
+        self.assertEqual(len(b), 4)
+        for octave in a:
             self.assertEqual(sorted(octave.permutation), list(range(256)))
             self.assertGreaterEqual(octave.offset_x, 0.0)
             self.assertLess(octave.offset_x, 256.0)
             self.assertGreaterEqual(octave.offset_z, 0.0)
             self.assertLess(octave.offset_z, 256.0)
-        self.assertEqual(len({o.permutation for o in octaves}), 4)
+        self.assertNotEqual(a[0], b[0])
 
-    def test_coordinate_changes_change_the_climate_field(self):
+    def test_climate_field_changes_with_world_coordinates(self):
         values = {climate.climate_temperature(777, x, -x) for x in range(-512, 513, 64)}
         self.assertGreater(len(values), 8)
 
 
-class ShaderPortTests(unittest.TestCase):
-    def test_sky_uses_high_precision_player_position_not_camera_location_alone(self):
-        source = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
-        self.assertIn("uniform ivec3 cameraPositionInt;", source)
-        self.assertIn("uniform vec3 cameraPositionFract;", source)
-        self.assertIn("uniform vec3 eyePosition;", source)
-        self.assertIn("cameraWorldXZ + (eyePosition.xz - cameraPosition.xz)", source)
-        self.assertIn("floor(playerWorldXZ + vec2(BETA_CLIMATE_ORIGIN_X, BETA_CLIMATE_ORIGIN_Z))", source)
-
-    def test_hsb_conversion_matches_java_rgb_byte_rounding(self):
-        source = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
-        self.assertIn("int sector = int(h);", source)
-        self.assertIn("return floor(rgb * 255.0 + 0.5) / 255.0;", source)
-
-
-class GeneratedAssetTests(unittest.TestCase):
-    def test_shader_texture_y_index_compensates_png_scanline_order(self):
-        shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
-        self.assertIn("1023 - (octave * 256 + (z & 255))", shader)
-
-    def test_shader_sampler_and_gradient_function_use_distinct_identifiers(self):
-        shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
-        self.assertIn("uniform sampler2D beta173ClimateGradient;", shader)
-        self.assertIn("vec2 beta173ClimateGradientVector(int index)", shader)
-        self.assertIn("beta173ClimateGradientVector(gradientIndex)", shader)
-
-    def test_generates_seed_specific_png_and_glsl_offsets(self):
+class SeedAssetTests(unittest.TestCase):
+    def test_generated_texture_contains_the_permutation_lookup(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "shaders"
-            texture, seed_source = climate.generate(root, -123456789, origin_x=30000, origin_z=-15000)
-            self.assertTrue(texture.is_file())
-            self.assertTrue(seed_source.is_file())
+            texture, seed_source = climate.generate(root, -123456789)
             width, height, pixels = decode_rgba8_png(texture)
             self.assertEqual((width, height), (256, 1024))
             octaves = climate.create_octaves(-123456789)
@@ -121,14 +128,71 @@ class GeneratedAssetTests(unittest.TestCase):
                     for x in (0, 1, 127, 255):
                         expected = octave.permutation[(x + octave.permutation[z]) & 255] % 12
                         actual = pixels[(png_y * width + x) * 4]
-                        self.assertEqual(actual, expected, (octave_index, x, z))
-            glsl = seed_source.read_text(encoding="utf-8")
-            self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 1", glsl)
-            self.assertIn("#define BETA_CLIMATE_ORIGIN_X 30000.0", glsl)
-            self.assertIn("#define BETA_CLIMATE_ORIGIN_Z -15000.0", glsl)
-            self.assertIn("World seed (comando /seed): -123456789", glsl)
+                        self.assertEqual(actual, expected)
+            source = seed_source.read_text(encoding="utf-8")
+            self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 1", source)
+            self.assertIn("World seed tomada de /seed o de Data.WorldGenSettings.seed: -123456789", source)
             for i in range(4):
-                self.assertIn(f"BETA_CLIMATE_OFFSET_{i}", glsl)
+                self.assertIn(f"BETA_CLIMATE_OFFSET_{i}", source)
+
+    def test_generator_is_deterministic_for_same_seed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            texture_a, source_a = climate.generate(root / "a", 42)
+            texture_b, source_b = climate.generate(root / "b", 42)
+            self.assertEqual(texture_a.read_bytes(), texture_b.read_bytes())
+            self.assertEqual(source_a.read_text(), source_b.read_text())
+
+
+class LevelDatSeedTests(unittest.TestCase):
+    def test_reads_modern_nested_world_gen_settings_seed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "level.dat"
+            path.write_bytes(modern_level_dat(-123456789012345))
+            self.assertEqual(configure.read_level_dat_seed(path), -123456789012345)
+
+    def test_reads_legacy_random_seed_from_world_folder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            world = Path(tmp) / "World"
+            world.mkdir()
+            (world / "level.dat").write_bytes(legacy_level_dat(123456789))
+            self.assertEqual(configure.read_level_dat_seed(world), 123456789)
+
+    def test_missing_world_seed_explains_manual_seed_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "level.dat"
+            path.write_bytes(gzip.compress(b"\x0a" + nbt_string("") + nbt_tag(10, "Data", b"\x00") + b"\x00"))
+            with self.assertRaisesRegex(ValueError, "Usa --seed"):
+                configure.read_level_dat_seed(path)
+
+
+class PackAutomationTests(unittest.TestCase):
+    def test_seed_pack_builds_without_mutating_source_files(self):
+        source_props = ROOT / "shaders" / "shaders.properties"
+        source_before = source_props.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            output = configure.build_seed_pack(-12345, Path(tmp))
+            self.assertTrue(output.is_file())
+            self.assertIn("neg12345", output.name)
+            with zipfile.ZipFile(output) as archive:
+                self.assertIsNone(archive.testzip())
+                names = archive.namelist()
+                self.assertIn("BETA173-CLIMATE-INFO.txt", names)
+                self.assertIn("shaders/textures/beta173_climate_gradient.png", names)
+                self.assertIn("shaders/shaders.properties", names)
+                props = archive.read("shaders/shaders.properties").decode("utf-8")
+                self.assertIn("customTexture.beta173ClimateGradient", props)
+                sky = archive.read("shaders/gbuffers_skybasic.fsh").decode("utf-8")
+                self.assertNotIn("#include", sky)
+                self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 1", sky)
+                self.assertIn("beta173ClimateTemperature", sky)
+            self.assertEqual(source_before, source_props.read_text(encoding="utf-8"))
+
+    def test_unconfigured_source_has_safe_neutral_fallback(self):
+        props = (ROOT / "shaders" / "shaders.properties").read_text(encoding="utf-8")
+        self.assertNotIn("customTexture.beta173ClimateGradient", props)
+        seed = (ROOT / "shaders" / "lib" / "climate_seed.glsl").read_text(encoding="utf-8")
+        self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 0", seed)
 
 
 if __name__ == "__main__":

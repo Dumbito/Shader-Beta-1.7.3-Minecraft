@@ -1,53 +1,73 @@
 # Beta173 Lighting v0.9.0-pre1 — reconstrucción del campo climático
 
-Shaderpack experimental para Iris que porta el campo de temperatura espacial utilizado por Minecraft Beta 1.7.3 para calcular el tono del cielo. La descarga estable publicada sigue siendo v0.8.1; esta preversión se construye desde las fuentes y requiere datos generados para la semilla del mundo.
+Shaderpack experimental para Iris que reconstruye la temperatura espacial que Beta 1.7.3 usa para colorear el cielo. **La descarga estable del proyecto sigue siendo v0.8.1**; esta preversión debe probarse visualmente en Minecraft antes de considerarse un lanzamiento.
 
 ## Qué reconstruye
 
-La cadena de referencia es:
+La cadena histórica está compuesta por:
 
-1. World.getSkyColor toma las coordenadas X/Z de la posición del jugador.
-2. WorldChunkManager.getTemperature(x, z) evalúa ruido Simplex 2D generado desde new Random(worldSeed * 9871L), con cuatro octavas.
-3. Cada NoiseGenerator2 consume offsets y genera una permutación desde java.util.Random.
-4. BiomeGenBase.getSkyColorByTemp divide la temperatura por 3, limita el resultado a [-1, 1] y calcula el color HSB: h = 0.62222224 - t * 0.05; s = 0.5 + t * 0.1; b = 1.
-5. El shader conserva la atenuación diurna y los ajustes de lluvia/tormenta ya portados.
+1. `World.getSkyColor` obtiene las coordenadas X/Z de la entidad observada y pide `WorldChunkManager.getTemperature(x,z)`.
+2. `WorldChunkManager` construye cuatro octavas a partir de `new Random(worldSeed * 9871L)`.
+3. `NoiseGeneratorOctaves2` mezcla esas octavas y sus escalas y amplitudes; cada `NoiseGenerator2` genera offsets y una permutación de gradientes, y evalúa ruido Simplex 2D.
+4. `BiomeGenBase.getSkyColorByTemp` transforma la temperatura en HSB y `java.awt.Color.HSBtoRGB` convierte el resultado en canales RGB de 8 bits. Java trunca cada canal con `(int)(canal * 255)`, en lugar de redondearlo.
+5. El shader conserva la atenuación del ciclo diurno y los ajustes por lluvia y tormenta de las versiones anteriores.
 
-La implementación incluye el consumo de Java Random, offsets y permutaciones de cuatro octavas, el ruido Simplex 2D y la cuantización RGB de 8 bits de Java. Como GLSL opera con float y el original utiliza double, no se garantiza igualdad bit a bit. La fidelidad visual sigue pendiente de validar en Minecraft.
+No usamos el uniforme moderno `temperature` de Iris para simular el ruido de Beta. La textura RGBA8 específica de la semilla codifica la tabla de índices de gradiente, mientras que los offsets se escriben automáticamente en un archivo GLSL generado.
 
-## Construir para una semilla concreta
+## Construir el ZIP de tu mundo sin editar código
 
-Iris no expone la semilla del mundo como uniforme estándar. Por eso el shaderpack genérico no puede reconstruir por sí solo la misma permutación para todas las partidas. El generador crea dos recursos específicos:
+No abras archivos GLSL ni reemplaces texturas a mano. Usa la herramienta de configuración:
 
-- shaders/textures/beta173_climate_gradient.png: lookup de índices de gradiente para las cuatro octavas.
-- shaders/lib/climate_seed.glsl: offsets de octava y marca de configuración.
+### Opción 1: mundo guardado localmente
 
-Entra al mundo, ejecuta /seed y copia el número. Desde la raíz del repositorio, ejecuta:
+```bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo"
+```
 
-    python3 Beta173-Lighting/tools/generate_climate_seed.py --seed SEMILLA_REAL
-    python3 Beta173-Lighting/tools/build_pack.py 0.9.0-pre1
+`--world` acepta la carpeta del mundo o el archivo `level.dat`. Intenta leer la semilla desde `Data.WorldGenSettings.seed` (mundos modernos) o `Data.RandomSeed` (formatos clásicos).
 
-Sustituye SEMILLA_REAL por el valor real, incluido el signo menos cuando corresponda. El ZIP generado queda personalizado para ese mundo; genera otra vez los recursos para otra semilla. No publiques los archivos generados si prefieres mantener privada la semilla.
+### Opción 2: semilla conocida
 
-Si no ejecutas el generador, el shader conserva el valor neutral BETA_SKY_TEMPERATURE 0.5 como respaldo. No hace falta modificar el código Java del juego.
+```bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789
+```
 
-Si la cámara se reinicia al desplazarse a distancias muy largas, comprueba la continuidad espacial. El generador acepta los argumentos opcionales --origin-x y --origin-z para ajustar el origen si la instalación concreta de Iris lo requiere. No se deben cambiar sin antes verificar el problema.
+Cambia `123456789` por el número exacto que devuelve `/seed`, incluidos los signos negativos.
 
-## Validación
+### Opción 3: introducirla cuando la herramienta la pida
 
-Ejecuta desde la raíz:
+```bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py
+```
 
-    python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+La herramienta solicitará la semilla. Este modo sirve también para mundos remotos, si el servidor permite conocerla.
 
-La suite climática cubre la secuencia de Java Random, vectores numéricos de referencia, cuatro permutaciones, variación espacial, la textura PNG, los offsets, la reconstrucción de posición del jugador y la conversión HSB/RGB. Las pruebas automatizadas no demuestran que GLSL compile en todas las configuraciones ni sustituyen una comparación visual dentro de Minecraft.
+El ZIP se crea en el directorio actual. Para cambiar el destino, añade `--output-dir "$HOME/Descargas"`. El nombre incluye la semilla utilizada y el ZIP incorpora `BETA173-CLIMATE-INFO.txt` como referencia.
 
-## Límites conocidos
+**El proceso no modifica el repositorio.** Copia los archivos a una carpeta temporal, genera textura y offsets, añade la directiva `customTexture` de Iris solo a ese paquete temporal, resuelve los `#include`, construye el ZIP y comprueba su integridad. Al terminar, puedes borrar o conservar el ZIP; no necesitas mantener una versión de las fuentes modificada para una semilla concreta.
 
-- La semilla debe proporcionarse manualmente; no se lee automáticamente desde el mundo.
-- La evaluación GLSL no es bit a bit idéntica al cálculo Java de doble precisión.
-- El origen de cámara y la posición del jugador deben comprobarse en distintas distancias y perspectivas.
-- Falta validación visual comparativa del cielo bajo distintos tiempos, biomas y estados meteorológicos.
-- Esta preversión no modifica la geometría de nubes ni la corrección de sombreado de sus caras.
+Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia que usa ese mundo. El paquete es **específico de la semilla**: genera uno diferente al cambiar de mundo/semilla.
 
-## Descarga estable
+## Precisión y limitaciones
 
-La versión descargable estable continúa siendo Beta173-Lighting-0.8.1.zip, disponible en el README principal. No existe un ZIP universal v0.9 preconfigurado porque cada compilación experimental depende de la semilla del mundo objetivo.
+- La implementación reproduce el orden de inicialización de `java.util.Random`, los cuatro offsets/permutaciones, el muestreo de gradientes, las escalas/amplitudes de las octavas y el método Simplex 2D de Beta 1.7.3.
+- Para las coordenadas se usa `cameraPositionInt` con `cameraPositionFract` de Iris y la corrección entre la cámara y la posición de los ojos. Esto evita depender del uniforme `cameraPosition`, que puede reiniciarse para limitar errores de precisión.
+- El port en GLSL usa `float`, mientras que Java utiliza `double`. La reproducción matemática es estructuralmente fiel, pero no se garantiza igualdad bit a bit y pequeñas diferencias pueden cambiar un canal cerca de un umbral de cuantización.
+- La lectura de `level.dat` solo funciona si la semilla está incluida en ese archivo. Para servidores o mundos con datos ocultos, usa `--seed` o el modo interactivo.
+- La comprobación del ZIP y las pruebas automáticas no sustituyen la revisión visual con la versión concreta de Minecraft, Iris y Sodium.
+
+Hasta verificar el color del cielo en varias coordenadas, durante el día/noche y bajo lluvia/tormenta, la v0.9 sigue siendo experimental.
+
+## Versión estable v0.8.1
+
+Para instalar la versión estable, descarga `Beta173-Lighting-0.8.1.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft#beta173-lighting). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**.
+
+## Pruebas
+
+Desde la raíz del repositorio:
+
+```bash
+python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+```
+
+Las pruebas de ruido y generación de activos cubren la reproducibilidad de `java.util.Random`, valores de regresión, construcción del mapa de gradientes, lectura de semilla NBT y la generación temporal del paquete. Las pruebas no simulan el renderizador completo de Minecraft.
