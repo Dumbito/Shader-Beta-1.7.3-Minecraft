@@ -94,6 +94,16 @@ La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. Como s
 
 Descarga `Beta173-Lighting-0.9.0.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft#beta173-lighting). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
 
+## Investigación experimental v0.9.1 — geometría de nubes Beta
+
+La rama [`feature/v0.9.1-beta-cloud-geometry`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9.1-beta-cloud-geometry) investiga la sustitución de la geometría moderna por el sistema de celdas de Beta 1.7.3. Usa la máscara original `clouds.png`, una cuadrícula de 6×6 celdas de 96×96 bloques, segmentos laterales de 12 bloques, 4 bloques de grosor, movimiento de 0.03 bloques por tick y sombreado histórico 1.0/0.7/0.9/0.8. La malla se genera en `gbuffers_clouds.gsh` para conservar el orden de profundidad frente al terreno. El shaderpack equivale visualmente al antiguo pase de profundidad, pero no reproduce literalmente la llamada OpenGL separada de depth-only.
+
+**No está incluido en el ZIP oficial v0.9.0.** Sigue en fase experimental hasta probar compilación y render real dentro de Minecraft. El geometry shader usa la malla de nubes moderna como disparador y requiere al menos 53 triángulos en un mismo draw call para emitir las 840 caras; debe verificarse con el renderizador exacto de la instancia.
+
+El selector `BETA_CUSTOM_CLOUD_GEOMETRY` se ofrece en **Shader Pack Settings**. Al apagarlo se usa el fallback de geometría moderna; no es necesario abrir ni editar el código fuente para probar ambos modos.
+
+PR de seguimiento: [#15 — v0.9.1 experimental: Beta cloud geometry](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/pull/15).
+
 ## Pruebas
 
 Desde la raíz del repositorio:

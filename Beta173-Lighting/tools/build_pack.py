@@ -93,7 +93,7 @@ def main(argv: list[str]) -> int:
     out = write_zip(version, Path.cwd(), overrides)
     with zipfile.ZipFile(out) as zf:
         names = zf.namelist()
-        assert not any(b"#include" in zf.read(n) for n in names if n.endswith((".vsh", ".fsh")))
+        assert not any(b"#include" in zf.read(n) for n in names if n.endswith((".vsh", ".fsh", ".gsh")))
     print(f"{out} ({out.stat().st_size} bytes, {len(names)} archivos, sin #include)")
     return 0
 
