@@ -40,6 +40,10 @@
 // al pase del motor.
 #define BETA_STAR_FIELD
 
+// Geometría clásica de nubes de Beta, implementada con el geometry shader de Iris.
+// La opción se puede activar/desactivar desde Shader Pack Settings.
+#define BETA_CUSTOM_CLOUD_GEOMETRY // [ON OFF]
+
 // Color de las nubes:
 //   0 = color y sombreado de Beta (World.drawClouds + caras 1.0 / 0.7 / 0.9 / 0.8). Ignora el
 //       color del motor, asi que no puede haber oscurecimiento doble.

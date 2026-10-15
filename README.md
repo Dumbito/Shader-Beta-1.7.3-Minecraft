@@ -64,6 +64,13 @@ Las pruebas automatizadas comprueban invariantes y código fuente, no simulan to
 - **[v0.7 — Sky, Stars & Clouds](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7):** configuración inicial de Iris para estrellas y nubes.
 - [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip): perfiles de niebla históricos.
 
+## v0.9 experimental — geometría de nubes Beta
+
+Se está reconstruyendo la malla de celdas, el desplazamiento y el grosor de las nubes de Beta 1.7.3 mediante el geometry shader opcional `gbuffers_clouds.gsh` de Iris. La versión experimental usa la textura original, celdas de 96 bloques con subdivisiones laterales cada 12 bloques, grosor de 4 bloques, movimiento de 0.03 bloques por tick y sombreado clásico por cara. Mantiene intacto el ZIP estable v0.8.1 hasta validar el resultado dentro de Minecraft.
+
+- Rama de desarrollo: [feature/v0.9-beta-cloud-geometry](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9-beta-cloud-geometry)
+- API usada: [geometry shaders de Iris](https://shaders.properties/current/reference/programs/gbuffers/) y [texturas personalizadas](https://shaders.properties/current/reference/buffers/custom_textures/).
+
 Código de referencia: https://github.com/jacobo-mc/mc_b1.7.3_release
 
 

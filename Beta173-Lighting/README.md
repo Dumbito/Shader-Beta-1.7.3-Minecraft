@@ -27,6 +27,12 @@ python3 Beta173-Lighting/tools/build_pack.py 0.9-climate
 
 Usa el ZIP resultante únicamente con el mundo para el que generaste la textura. Si Iris ha reiniciado las coordenadas de `cameraPosition`, ajusta `--origin-x` y `--origin-z` y vuelve a generar. El port usa `eyePosition` con `cameraPositionInt`/`cameraPositionFract` para reconstruir la posición del jugador incluso si la cámara está desplazada; falta validar casos como vehículos y cambios de origen. GLSL `float` no reproduce bit a bit la aritmética `double` de Java. Falta comprobarlo visualmente en el cliente; esta rama no debe tratarse aún como lanzamiento estable.
 
+## v0.9 experimental — geometría de nubes Beta
+
+La rama `feature/v0.9-beta-cloud-geometry` incorpora una reconstrucción experimental de la malla de nubes mediante `gbuffers_clouds.gsh` de Iris, en vez de usar la malla moderna como resultado final. Se reutiliza la textura original `clouds.png` de Beta 1.7.3; la cuadrícula es de 6×6 celdas de 96×96 bloques, con segmentos de paredes de 12 bloques, grosor de 4 bloques, desplazamiento de 0.03 bloques por tick y sombreado clásico 1.0/0.7/0.9/0.8. La geometría se emite dentro del pase de nubes para conservar la prueba de profundidad respecto al terreno. La visibilidad final se busca igualar; no se reproduce literalmente la llamada OpenGL separada de depth-only del renderer antiguo.
+
+**Estado:** experimental. El geometry shader usa las primitivas de la malla nativa como disparadores y necesita al menos 53 triángulos por draw call para emitir las 840 caras del patrón. Las pruebas estáticas no confirman el resultado visual dentro de Minecraft. Si se detecta incompatibilidad, desactiva `BETA_CUSTOM_CLOUD_GEOMETRY` en Shader Pack Settings para usar el fallback moderno.
+
 ## Instalación
 
 1. Copia `Beta173-Lighting-0.8.zip` (raíz del repositorio) sin descomprimir en la carpeta `shaderpacks` de tu instancia.
@@ -81,7 +87,7 @@ Las pruebas automatizadas no sustituyen una prueba visual en Minecraft.
 
 - La orientación de las estrellas asume el marco con el que el juego dibuja el sol y la luna (Rx y luego Ry de -90°). Se comprueba con `BETA_DEBUG 4`.
 - Si Iris voltea la textura verticalmente al cargarla, las estrellas quedarían reflejadas respecto al original (mismo aspecto, otra disposición).
-- Las nubes conservan la geometría del motor; no se ha reconstruido el sistema de nubes de Beta (celdas de 12 bloques, desplazamiento, dos pasadas).
+- La geometría Beta de nubes está en la rama v0.9 experimental y requiere validación visual; el efecto se reconstruye en un pase de shaderpack, no como la llamada de profundidad separada del renderer antiguo.
 - Sol, luna y fases de la luna siguen siendo los del juego moderno.
 - El modo neutral es el fallback. El port climático v0.9 está en investigación y requiere generar la textura/offsets con la semilla del mundo; no se garantiza igualdad bit a bit ni coordenadas absolutas tras wrapping.
 - La propagación de luz y el motor moderno difieren de Beta 1.7.3.
