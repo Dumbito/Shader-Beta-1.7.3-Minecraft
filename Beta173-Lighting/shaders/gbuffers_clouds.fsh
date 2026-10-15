@@ -12,18 +12,30 @@ flat in float betaCloudShade;
 
 out vec4 fragColor;
 
-// Rampa configurable: mantiene legibles las nubes al atardecer y las oscurece
-// poco a poco hasta la noche. Solo afecta el RGB; no toca alfa ni geometria.
-float beta173CloudNightFloor() {
+// Visibilidad de nube limitada al tramo diurno. La rampa cruza correctamente el tick 24000.
+float beta173CloudVisibility() {
     float ticks = mod(float(worldTime), 24000.0);
-    float dusk = smoothstep(BETA_CLOUD_DUSK_START_TICK, BETA_CLOUD_DUSK_END_TICK, ticks);
-    return mix(BETA_CLOUD_DUSK_MIN_DAYLIGHT, BETA_CLOUD_NIGHT_MIN_DAYLIGHT, dusk);
-}
+    float visibility;
 
-float beta173CloudDaylight() {
-    return max(beta173DayFactor(), beta173CloudNightFloor());
+    // Anochecer: transición suave desde las nubes normales hasta ocultarlas.
+    if (ticks >= BETA_CLOUD_DUSK_START_TICK && ticks < BETA_CLOUD_DUSK_END_TICK) {
+        visibility = 1.0 - smoothstep(BETA_CLOUD_DUSK_START_TICK,
+                                      BETA_CLOUD_DUSK_END_TICK, ticks);
+    }
+    // Amanecer: el intervalo cruza el final del día (24000 -> 0).
+    else if (ticks >= BETA_CLOUD_DAWN_START_TICK || ticks < BETA_CLOUD_DAWN_END_TICK) {
+        float dawnTicks = ticks < BETA_CLOUD_DAWN_END_TICK ? ticks + 24000.0 : ticks;
+        visibility = smoothstep(BETA_CLOUD_DAWN_START_TICK,
+                                BETA_CLOUD_DAWN_END_TICK + 24000.0, dawnTicks);
+    }
+    // Noche profunda: no emitir ningún fragmento de nube.
+    else if (ticks >= BETA_CLOUD_DUSK_END_TICK && ticks < BETA_CLOUD_DAWN_START_TICK) {
+        visibility = 0.0;
+    } else {
+        visibility = 1.0;
+    }
+    return clamp(visibility, 0.0, 1.0);
 }
-
 vec3 beta173CloudColor() {
     vec3 color = vec3(1.0);
     float rain = beta173Rain();
@@ -33,8 +45,8 @@ vec3 beta173CloudColor() {
         color = color * k + vec3(gray) * (1.0 - k);
     }
 
-    // Respuesta continua durante el ciclo completo; no hay corte en 12000/13000 ticks.
-    float day = beta173CloudDaylight();
+    // Mantener la respuesta de color de v1.0.0: usar la fórmula diurna de Beta.
+    float day = beta173DayFactor();
     color *= vec3(day * 0.9 + 0.1, day * 0.9 + 0.1, day * 0.85 + 0.15);
 
     float thunder = beta173Thunder();
@@ -55,17 +67,28 @@ float beta173CloudFaceShade() {
 
 void main() {
 #if BETA_DEBUG == 1
+    // El diagnóstico puede forzar rojo incluso durante la noche.
     fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-#elif BETA_CUSTOM_CLOUD_GEOMETRY
+    return;
+#else
+    float cloudVisibility = beta173CloudVisibility();
+    if (cloudVisibility <= 0.001) discard;
+
+#if BETA_CUSTOM_CLOUD_GEOMETRY
     vec4 mask = texture(beta173CloudMap, betaCloudUV);
     if (mask.a < 0.01) discard;
-    fragColor = vec4(beta173CloudColor() * betaCloudShade, 0.8 * mask.a);
+    fragColor = vec4(beta173CloudColor() * betaCloudShade,
+                     0.8 * mask.a * cloudVisibility);
 #elif BETA_CLOUD_COLOR_MODE == 1
-    fragColor = cloudColor;
+    // El perfil de color nativo también respeta el horario diurno.
+    fragColor = vec4(cloudColor.rgb, cloudColor.a * cloudVisibility);
 #elif BETA_CLOUD_COLOR_MODE == 2
-    fragColor = vec4(cloudColor.rgb * beta173CloudColor(), cloudColor.a);
+    fragColor = vec4(cloudColor.rgb * beta173CloudColor(),
+                     cloudColor.a * cloudVisibility);
 #else
-    // Modo estable: conserva el alfa/máscara nativa; el tiempo solo modifica el RGB.
-    fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);
+    // Modo estable: geometría y color de v1.0.0; solo se añade el horario diurno.
+    fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(),
+                     cloudColor.a * cloudVisibility);
+#endif
 #endif
 }

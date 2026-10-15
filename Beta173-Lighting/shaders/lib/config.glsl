@@ -48,13 +48,15 @@
 // La opción se puede cambiar desde Shader Pack Settings; no hace falta editar este archivo.
 #define BETA_CUSTOM_CLOUD_GEOMETRY 0 // [0 1]
 
-// Rampa del RGB de las nubes: atardecer legible -> oscuridad nocturna gradual.
-// No cambia la opacidad, la máscara, la geometría, la altura ni el desplazamiento.
-// Las opciones aparecen en Shader Pack Settings; no hace falta editar este archivo.
-#define BETA_CLOUD_DUSK_START_TICK 12000.0 // [11000 11500 12000 12500 13000]
-#define BETA_CLOUD_DUSK_END_TICK 18000.0 // [16000 17000 18000 19000 20000]
-#define BETA_CLOUD_DUSK_MIN_DAYLIGHT 0.60 // [0.45 0.50 0.55 0.60 0.65 0.70]
-#define BETA_CLOUD_NIGHT_MIN_DAYLIGHT 0.12 // [0.08 0.10 0.12 0.14 0.16 0.18 0.20]
+// Horario de nubes: visibles durante el día, ocultas por completo por la noche.
+// Ajustables desde Shader Pack Settings; no hace falta editar GLSL.
+// Amanecer cruza el tick 24000: empieza antes de 0 y termina de aparecer al tick 1000.
+#define BETA_CLOUD_DAWN_START_TICK 22000.0 // [21000 21500 22000 22500 23000]
+#define BETA_CLOUD_DAWN_END_TICK 1000.0 // [500 1000 1500 2000 2500]
+// Al anochecer desaparecen progresivamente entre los ticks 12000 y 13500.
+#define BETA_CLOUD_DUSK_START_TICK 12000.0 // [11000 11500 12000 12500]
+#define BETA_CLOUD_DUSK_END_TICK 13500.0 // [13000 13500 14000 14500 15000]
+
 
 // Color de las nubes:
 //   0 = color y sombreado de Beta (World.drawClouds + caras 1.0 / 0.7 / 0.9 / 0.8). Ignora el
