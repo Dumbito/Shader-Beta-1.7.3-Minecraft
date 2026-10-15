@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 public final class Beta173ClimateBridge implements ModInitializer {
     @Override
     public void onInitialize() {
-        PayloadTypeRegistry.playS2C().register(WorldSeedPayload.TYPE, WorldSeedPayload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(WorldSeedPayload.TYPE, WorldSeedPayload.STREAM_CODEC);
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             if (!SeedShareConfig.shareWorldSeed()) return;
