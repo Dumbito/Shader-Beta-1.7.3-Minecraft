@@ -12,6 +12,8 @@ La cadena histórica está compuesta por:
 4. `BiomeGenBase.getSkyColorByTemp` transforma la temperatura en HSB y `java.awt.Color.HSBtoRGB` convierte el resultado en canales RGB de 8 bits. Java trunca cada canal con `(int)(canal * 255)`, en lugar de redondearlo.
 5. El shader conserva la atenuación del ciclo diurno y los ajustes por lluvia y tormenta de las versiones anteriores.
 
+Para no recalcular las cuatro octavas por cada fragmento de pantalla, el resultado climático del jugador se calcula en los vertex shaders y se transmite como un valor `flat` a los fragment shaders de terreno y entidades que aplican niebla.
+
 No usamos el uniforme moderno `temperature` de Iris para simular el ruido de Beta. La textura RGBA8 específica de la semilla codifica la tabla de índices de gradiente, mientras que los offsets se escriben automáticamente en un archivo GLSL generado.
 
 ## Construir el ZIP de tu mundo sin editar código
