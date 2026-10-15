@@ -2,12 +2,12 @@
 ### Reconstruyendo la iluminación, el cielo y la atmósfera de Minecraft Beta 1.7.3 en Minecraft moderno
 
 <p align="center">
-  <strong>Un proyecto experimental de ingeniería inversa visual, traducción matemática y shaders GLSL para Iris.</strong>
+  <strong>Un proyecto de ingeniería inversa visual, traducción matemática y shaders GLSL para Iris; v0.9.0 es su versión oficial actual.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip">Descargar v0.9.0 universal RC1 (pruebas CI superadas; prueba visual pendiente)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip">Descargar v0.9.0 oficial (prueba visual aprobada)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (versión anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar">Descargar Climate Bridge 0.1.0 (Fabric 26.3)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático por semilla</a> ·
@@ -19,15 +19,15 @@
 
 ---
 
-## 🧪 v0.9.0 universal — RC1 publicado en main; falta validación visual
+## ✅ v0.9.0 universal — versión oficial
 
-El candidato universal v0.9.0 ya está generado y publicado en `main` como [RC1 descargable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip). GitHub Actions ejecuta las pruebas de regresión, construye el ZIP, comprueba su integridad, valida que no incluya una tabla climática de una semilla concreta y enlaza los cinco pares de programas GLSL. El workflow separado también compila y ejecuta las pruebas del **Beta173 Climate Bridge**. Esto valida el empaquetado y el código automatizable, pero no sustituye la prueba visual dentro de Minecraft.
+La versión oficial **Beta173 Lighting v0.9.0** se publica en `main` como [ZIP instalable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip). La **prueba visual manual dentro de Minecraft fue completada y aprobada por el autor del proyecto**. GitHub Actions también ejecuta las pruebas de regresión, construye y comprueba la integridad del ZIP, verifica que el paquete universal no contenga una tabla climática de una semilla concreta y enlaza los cinco pares de programas GLSL. El workflow independiente compila y ejecuta las pruebas de **Beta173 Climate Bridge**.
 
 - **ZIP universal sin mod:** usa automáticamente el uniforme `temperature` de Iris para la temperatura base del bioma actual. Funciona en cualquier mundo sin preparación, pero no reconstruye el campo climático espacial original de Beta.
-- **Con Beta173 Climate Bridge (Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene automáticamente la semilla real del servidor integrado y calcula la temperatura espacial histórica; el shader aplica la conversión HSB y cuantización RGB de 8 bits, aunque el pipeline moderno todavía necesita verificación visual.
+- **Con Beta173 Climate Bridge (Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene automáticamente la semilla real del servidor integrado, reconstruye el ruido climático espacial histórico y entrega el valor al uniforme `temperature` de Iris. Así no hace falta editar líneas GLSL ni introducir manualmente la semilla. En un servidor remoto, el administrador debe activar explícitamente `shareWorldSeed=true` si desea compartirla.
 - **Multijugador remoto:** si el servidor tiene el mismo mod y el administrador activa explícitamente `shareWorldSeed=true` en `config/beta173-climate-bridge.properties`, el cliente recibe la semilla real y activa el campo histórico. La opción viene desactivada por privacidad. Sin cooperación del servidor, Minecraft entrega una semilla ofuscada y el ZIP recurre automáticamente a la temperatura del bioma moderno.
 
-El ZIP RC1 y el mod compilado están disponibles desde `main`; el workflow publica también los hashes SHA-256. **La versión estable sigue siendo v0.8.1** hasta probar dentro de Minecraft el cielo, la niebla y las transiciones de bioma/clima, además del comportamiento del bridge en mundo local y multijugador. CI verde no equivale a una validación visual.
+El ZIP oficial v0.9.0 y el Climate Bridge se publican desde `main`, junto con sus hashes SHA-256. **La prueba visual manual de v0.9.0 fue superada**, por lo que esta versión sustituye a v0.8.1 como versión estable actual. El RC1 se conserva como artefacto histórico. La aprobación visual no significa igualdad píxel a píxel con el motor original ni certifica todas las combinaciones posibles de semillas, tiempos y clima.
 
 
 ### Beta173 Climate Bridge — port climático mediante mod
@@ -40,13 +40,13 @@ El mod [Beta173-Climate-Bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Min
 
 **Servidor y privacidad:** en un mundo de un jugador la semilla se envía desde el servidor integrado al cliente local. En un servidor dedicado, la opción `shareWorldSeed=true` de `config/beta173-climate-bridge.properties` debe activarse expresamente por el administrador; por defecto está desactivada. Si no llega una semilla compatible, el mod deja intacto el valor de Iris y actúa como fallback.
 
-**Compatibilidad objetivo:** Minecraft Java 26.3, Fabric Loader 0.19.5+, Fabric API 0.162.0+26.3, Iris 1.11.6+mc26.3 y Java 25+. Las pruebas automáticas cubren el cálculo numérico, pero la validación visual final debe hacerse en Minecraft.
+**Compatibilidad de v0.9.0:** Minecraft Java 26.3, Fabric Loader 0.19.5+, Fabric API 0.162.0+26.3, Iris 1.11.6+mc26.3 y Java 25+. La suite automatizada cubre el código y el empaquetado; además, el autor confirmó que la prueba visual manual del shaderpack se completó y aprobó en Minecraft.
 
 ---
 
 ## 📦 v0.9.0-pre1 — paquete de transición anterior
 
-**Estado: v0.9.0-pre1 experimental; v0.8.1 sigue siendo la versión estable anterior.** Ya están publicados dos archivos: el [ZIP base instalable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip), que mantiene el fallback neutral hasta conocer la semilla, y el [kit generador climático](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip), que crea un ZIP específico para tu mundo sin editar código. Iris no expone por sí solo la semilla cruda a los shaders; por eso el paquete de pre1 exigía generar datos por mundo. La rama universal añade un fallback sin semilla y un bridge opcional para recuperar el cálculo exacto cuando la semilla está disponible. Aunque las pruebas automatizadas y el empaquetado pasen, la v0.9 necesita validación visual dentro de Minecraft antes de ser declarada estable.
+**Estado: archivo histórico anterior a la v0.9.0 oficial; no es la descarga estable actual.** Se conservan dos archivos por compatibilidad: el [ZIP base instalable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip), que mantiene el fallback neutral hasta conocer la semilla, y el [kit generador climático](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip), que crea un ZIP específico para tu mundo sin editar código. Iris no expone por sí solo la semilla cruda a los shaders; por eso el paquete de pre1 exigía generar datos por mundo. La rama universal añade un fallback sin semilla y un bridge opcional para recuperar el cálculo exacto cuando la semilla está disponible. Aunque las pruebas automatizadas y el empaquetado pasen, la v0.9 necesita validación visual dentro de Minecraft antes de ser declarada estable.
 
 La ruta específica por semilla reconstruye la cadena histórica completa:
 
@@ -92,13 +92,13 @@ Instala el ZIP resultante en la carpeta `shaderpacks` de la instancia con la que
 
 La estructura del ruido, sus cuatro octavas, la inicialización de aleatoriedad, la tabla de gradientes y la conversión histórica del color están implementadas. El cálculo usa las coordenadas enteras de cámara no desplazadas que expone Iris y recupera la fracción de posición, lo que evita depender del uniforme `cameraPosition` que se reinicia para mantener precisión.
 
-Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con `double`, mientras que el shader usa `float`; los errores de precisión pueden importar cerca de los límites de cuantización RGB. La validación matemática y el empaquetado deben complementarse con una prueba visual en el cliente, en varias coordenadas, horas y condiciones meteorológicas. La versión estable descargable continúa siendo v0.8.1 hasta completar esa validación.
+Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con `double`, mientras que los shaders usan `float`; pequeñas diferencias pueden aparecer cerca de los umbrales de cuantización RGB. La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. Se pueden ampliar las pruebas con nuevas semillas, coordenadas y condiciones meteorológicas; no se afirma paridad píxel a píxel con Beta.
 
 ---
 
 ## 🌌 ¿Qué es Beta173 Lighting?
 
-**Beta173 Lighting es un shaderpack experimental que intenta recuperar parte del comportamiento visual de Minecraft Java Edition Beta 1.7.3 y reproducirlo en una versión moderna del juego mediante Iris y GLSL.**
+**Beta173 Lighting es un shaderpack de reconstrucción visual que intenta recuperar parte del comportamiento de Minecraft Java Edition Beta 1.7.3 dentro del pipeline moderno mediante Iris y GLSL. La v0.9.0 es la versión oficial actual, aunque el proyecto no pretende reemplazar el motor completo ni garantiza identidad píxel a píxel.**
 
 No pretende ser una copia exacta del motor antiguo ni un mod que sustituya el código interno de Minecraft. El proyecto selecciona sistemas concretos del renderizado histórico —la curva de iluminación, la pérdida de luz del cielo, el color del cielo y de la niebla, el ciclo de las estrellas y el aspecto de las nubes— y los vuelve a expresar como programas de shader compatibles con la arquitectura moderna.
 
@@ -120,7 +120,7 @@ El resultado es una reconstrucción progresiva, no una afirmación de equivalenc
 - [Qué proyectos y tecnologías utilizamos](#-qué-proyectos-y-tecnologías-utilizamos)
 - [Cómo trasladamos Beta a un motor moderno](#-cómo-trasladamos-beta-a-un-motor-moderno)
 - [Los sistemas que reconstruimos](#-los-sistemas-que-reconstruimos)
-- [Historia completa: v0.1–v0.9.0-pre1](#-historia-completa-v01v090-pre1)
+- [Historia completa: v0.1–v0.9.0](#-historia-completa-v01v090)
 - [Arquitectura del repositorio](#-arquitectura-del-repositorio)
 - [Configuración](#️-configuración)
 - [Instalación](#-instalación)
@@ -309,7 +309,7 @@ La altura merece una distinción especial. En Beta la altura nominal de nubes er
 
 ---
 
-## 🗓️ Historia completa: v0.1–v0.9.0-pre1
+## 🗓️ Historia completa: v0.1–v0.9.0
 
 La numeración registra una evolución por capas. Las versiones menores correctivas son importantes: parte del trabajo no consiste en añadir efectos, sino en descubrir que una etapa moderna aplica una mezcla, un color o una geometría que no coincide con la suposición inicial.
 
@@ -325,8 +325,8 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 | **v0.7.1** | Corrección de nubes y estrellas | Añade programas de nubes compatibles con el pase del motor para preservar su geometría, color de vértice y alfa. Corrige la salida del brillo estelar para evitar multiplicaciones de alfa no deseadas. |
 | **v0.7.2** | Ciclo de color de nubes | Refina la respuesta de color histórica de las nubes ante día, lluvia y tormenta y restaura la salida RGBA de estrellas observada en la referencia. La geometría y la máscara de las nubes siguen procediendo del motor moderno. |
 | **v0.8** | Estrellas de Beta y paquete reproducible | Genera un mapa de estrellas a partir de la rutina histórica, lo integra en el shader del cielo, refina la cobertura de estrellas y el oscurecimiento nocturno de nubes, implementa el sombreado y color de nube inspirados en Beta e incorpora un empaquetador que resuelve los <code>#include</code>. |
-| **v0.8.1** | Niebla por dimensión y altura de nubes | Separa las rutas de niebla y luz ambiental de Overworld, Nether y End; el End puede usar parámetros de niebla nativos de Iris. Remapea la altura de las nubes a Y=260,99 para el rango moderno. Es una versión de adaptación, aún sujeta a validación visual. |
-| **v0.9.0-pre1** | Reconstrucción del campo climático | Porta la secuencia de Java Random, ruido Simplex de cuatro octavas, lookup de gradientes por semilla y HSB/RGB de 8 bits. Requiere generar recursos para la semilla de cada mundo; el build y la validación visual en Minecraft siguen pendientes. |
+| **v0.8.1** | Niebla por dimensión y altura de nubes | Separa las rutas de niebla y luz ambiental de Overworld, Nether y End; el End puede usar parámetros de niebla nativos de Iris. Remapea la altura de las nubes a Y=260,99 para el rango moderno. Fue la versión estable anterior a v0.9.0. |
+| **v0.9.0** | Campo climático universal y Climate Bridge | Publica un shaderpack universal con fallback automático por bioma y un mod opcional que reconstruye el ruido espacial dependiente de la semilla de Beta 1.7.3 sin editar GLSL a mano. CI, empaquetado e integridad validados; la prueba visual manual fue completada y aprobada por el autor. El port conserva limitaciones numéricas entre `double` de Java y `float` de GLSL. |
 
 ### La evolución en cuatro etapas
 
@@ -338,17 +338,18 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 
 **Etapa IV — diferencias entre dimensiones y altura moderna (v0.8.1).** El foco se desplaza a las propiedades que varían por dimensión y a la altura de las nubes en un mundo con rango vertical moderno. La compatibilidad no se resuelve solo con fórmulas históricas: también requiere utilizar correctamente los parámetros de Iris.
 
-**Etapa V — campo climático dependiente de la semilla (v0.9.0-pre1).** Se reconstruye el ruido espacial que Beta evaluaba con las coordenadas X/Z del jugador. Al no disponer de la semilla original desde un uniforme estándar de Iris, el paquete requiere una generación externa de los datos para el mundo objetivo.
+**Etapa V — campo climático universal (v0.9.0).** Se reconstruye el ruido espacial de Beta y se ofrece un fallback automático para mundos sin semilla disponible. El Climate Bridge permite obtener la semilla del mundo localmente y, en multijugador, solo cuando el servidor decide compartirla.
 
 ### Documentos y artefactos de versión
 
 - [Paquete v0.8 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.zip)
-- [Paquete v0.8.1 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip)
+- [Paquete oficial v0.9.0 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip)
+- [Paquete v0.8.1 anterior en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip)
 - [Release v0.8](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.8)
 - [Release v0.7.2](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2)
 - [Release v0.7.1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.1)
 - [Release v0.7](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7)
-- [Fuentes actualizadas y generador climático v0.9.0-pre1 en main](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting)
+- [Fuentes de v0.9.0 oficial y generador climático en main](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting)
 - [Guía de generación por semilla](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md)
 
 ---
@@ -424,15 +425,12 @@ Si una opción se cambia en las fuentes, ejecuta de nuevo la batería de pruebas
 
 ## 📦 Instalación
 
-1. Descarga [**Beta173-Lighting-0.8.1.zip**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
-2. Copia el archivo ZIP, **sin descomprimirlo**, en la carpeta <code>shaderpacks</code> de la instancia de Minecraft en la que tengas Iris.
-3. Inicia el juego y abre **Opciones → Ajustes de vídeo → Shader Packs** (el nombre exacto puede variar según la versión o el idioma).
-4. Selecciona <code>Beta173-Lighting-0.8.1</code>.
-5. Comprueba el Overworld durante el día y la noche, prueba lluvia o tormenta, y revisa la niebla del Nether y del End.
+1. Descarga [**Beta173-Lighting-0.9.0.zip**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip).
+2. Copia el ZIP, **sin descomprimirlo**, en `shaderpacks` de la instancia que usa Iris y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**.
+3. Para activar la reconstrucción climática histórica por semilla, instala opcionalmente [**Beta173 Climate Bridge 0.1.0 para Fabric 26.3**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar) en `mods/`, junto con Fabric Loader, Fabric API e Iris en las versiones compatibles descritas abajo. En un mundo local, la semilla se obtiene automáticamente.
+4. En un servidor dedicado, el envío de semilla sigue desactivado por defecto; solo funciona si el administrador instala el bridge y habilita explícitamente `shareWorldSeed=true`. Si no se comparte la semilla, el shaderpack utiliza el fallback por temperatura del bioma de Iris.
 
-Si el shaderpack no aparece, comprueba que el ZIP contiene una carpeta <code>shaders/</code> en su raíz y que no lo has dejado dentro de una segunda carpeta contenedora. El archivo debe mantenerse comprimido en <code>shaderpacks</code>.
-
-**Importante:** el ZIP v0.8.1 es un paquete experimental. Que se instale correctamente no significa que la apariencia de todos los sistemas haya quedado verificada visualmente.
+El paquete se instala sin editar código. La prueba visual manual de v0.9.0 fue completada y aprobada por el autor; esto no implica paridad píxel a píxel en toda semilla o condición.
 
 ---
 
@@ -473,11 +471,9 @@ Cuando está disponible <code>glslangValidator</code>, se pueden validar los pro
 
 En el candidato v0.8.1 usado durante el desarrollo, **27 pruebas automatizadas pasaron**, el ZIP superó la comprobación de integridad y se validaron cinco pares de programas GLSL. Son resultados estáticos del candidato; no equivalen a una prueba visual automatizada dentro de Minecraft.
 
-### La verificación visual sigue siendo necesaria
+### Validación visual manual: superada
 
-Una ecuación puede coincidir con la referencia y aun así producir una imagen distinta debido a la geometría moderna, a la precisión numérica, a la interpolación, al blending, a las matrices de cámara o a los datos que Iris exponga en cada etapa.
-
-Las pruebas de estrellas, nubes y niebla necesitan una última evaluación en el juego real: distintas horas, clima, biomas, alturas de cámara y dimensiones. El proyecto no afirma equivalencia visual completa únicamente porque las pruebas pasen.
+El autor confirmó que la prueba visual de la v0.9.0 dentro de Minecraft fue completada y aprobada. Esta comprobación se suma a la suite automatizada, al empaquetado reproducible y al enlace GLSL verificado por CI. Demuestra que la versión probada funciona en el entorno usado, pero no equivale a una prueba automática de todas las combinaciones de semillas, dimensiones, clima y hardware, ni garantiza identidad píxel a píxel con Beta.
 
 ---
 
@@ -488,13 +484,13 @@ Las pruebas de estrellas, nubes y niebla necesitan una última evaluación en el
 - **Propagación de luz:** un shader no reemplaza los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. La reconstrucción actúa sobre los datos que ya expone el motor moderno.
 - **Lightmap moderno:** las coordenadas del lightmap actual solo pueden convertirse de forma aproximada en los niveles históricos de Beta. La correspondencia no implica que las dos simulaciones de iluminación sean idénticas.
 - **Interpolación temporal:** determinadas funciones históricas recibían fracciones de tick o datos del motor que no siempre están disponibles de la misma forma en el shader.
-- **Campo climático (v0.9.0-pre1):** el ZIP debe construirse para la semilla del mundo mediante `tools/configure_climate_pack.py`. La estructura reproduce las cuatro octavas y la cuantización HSB histórica, pero el shader usa `float`, por lo que no se garantiza igualdad bit a bit. La apariencia aún requiere validación visual en Minecraft.
+- **Campo climático (v0.9.0):** el ZIP universal funciona sin editar código; con el Climate Bridge obtiene la semilla del mundo local y reconstruye el ruido espacial histórico. Java usa `double` y GLSL `float`, por lo que no se promete igualdad bit a bit aunque la prueba visual manual de v0.9.0 haya sido aprobada.
 - **Sol y luna:** el proyecto se centra en el cielo, las estrellas y la niebla; no reconstruye de forma completa la geometría, el movimiento o las fases de los cuerpos celestes históricos.
 - **Geometría de nubes:** las nubes utilizan la geometría del motor moderno; todavía no se ha reproducido íntegramente el sistema de celdas, desplazamiento y múltiples pasadas de Beta.
 - **Altura de nube:** Y=260,99 es una adaptación fija al rango vertical moderno; puede no ser ideal sobre todos los picos.
 - **Niebla por dimensión:** la ruta del End depende de los parámetros nativos que proporcione la versión de Iris utilizada.
 - **Compatibilidad de renderizado:** los pases y uniformes disponibles pueden variar entre versiones de Minecraft, Iris y Sodium.
-- **Fidelidad visual:** se verifica manualmente y no se puede deducir solo de las pruebas matemáticas o de la compilación GLSL.
+- **Fidelidad visual:** la prueba manual de v0.9.0 fue aprobada por el autor; nuevas combinaciones de Minecraft, Iris, Sodium, semillas o clima pueden requerir validación adicional.
 
 Estas limitaciones son parte de la documentación del proyecto, no una lista de problemas que deban darse necesariamente en todas las instalaciones. Su efecto debe comprobarse con la combinación de software concreta.
 
@@ -508,7 +504,7 @@ Las siguientes líneas representan trabajo potencial, no funciones que deban con
 - Revisar las diferencias entre la geometría de nubes de Beta y la geometría nativa moderna, sin romper la compatibilidad con Iris.
 - Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
 - Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
-- Validar el campo climático v0.9 con semillas reales en distintas coordenadas, horas y condiciones meteorológicas, comparando el color con una referencia Java.
+- Ampliar la matriz de validación climática de v0.9.0 con más semillas, coordenadas, horas y condiciones meteorológicas, comparando los resultados con la referencia Java.
 - Probar sistemáticamente amanecer, mediodía, atardecer, noche, lluvia, tormenta y niebla en cada dimensión.
 - Documentar por versión las combinaciones de Minecraft, Iris y Sodium en las que se haya probado visualmente el shaderpack.
 - Mantener los perfiles de diagnóstico y el empaquetado reproducible para que futuras correcciones no deshagan las anteriores.

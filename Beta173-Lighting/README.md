@@ -1,26 +1,27 @@
-# Beta173 Lighting v0.9.0 — campo climático universal (RC1)
+# Beta173 Lighting v0.9.0 — campo climático universal (versión oficial)
 
-Shaderpack para Iris con un fallback climático universal y un port opcional del ruido histórico de Beta 1.7.3. **Estado: RC1 / candidato a versión estable. La versión estable anterior sigue siendo v0.8.1** porque aún falta validación visual completa dentro de Minecraft.
+Shaderpack para Iris con fallback climático universal y un port del ruido histórico de Beta 1.7.3 mediante el Climate Bridge opcional. **Estado: versión oficial publicada. La prueba visual manual en Minecraft fue completada y aprobada por el autor del proyecto.**
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
 Esta rama incorpora una ruta universal sin editar GLSL, reemplazar texturas ni introducir la semilla manualmente:
 
 1. **Shaderpack universal, sin mods extra:** usa el uniforme `temperature` de Iris, actualizado automáticamente para el bioma actual. Funciona en mundos locales y servidores porque no requiere conocer la semilla. Es un respaldo dependiente del bioma moderno, no el ruido espacial exacto de Beta.
-2. **Beta173 Climate Bridge (opcional, Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene la semilla real del servidor integrado, reconstruye en Java el Simplex histórico de cuatro octavas y suministra la temperatura espacial calculada al uniforme estándar `temperature` de Iris. El shader aplica después la transformación HSB y la cuantización RGB de 8 bits; no se afirma paridad visual píxel a píxel sin probarlo en Minecraft.
+2. **Beta173 Climate Bridge (opcional, Fabric 26.3 + Iris 1.11.6+):** en un mundo local obtiene la semilla del servidor integrado y reconstruye en Java el Simplex histórico de cuatro octavas; entrega la temperatura espacial al uniforme `temperature` de Iris. La prueba visual manual de v0.9.0 fue completada y aprobada por el autor, sin afirmar paridad píxel a píxel en todas las condiciones.
 3. **Mundos multijugador remotos:** el cliente vanilla recibe una semilla ofuscada, no la semilla original. Si el servidor instala el mismo bridge y habilita explícitamente `shareWorldSeed=true` en `config/beta173-climate-bridge.properties`, puede enviar la semilla cruda al cliente. La opción está desactivada por defecto. Sin cooperación del servidor, el shaderpack conserva el fallback automático por bioma.
 
-El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. La CI actual ejecuta la suite Python, construye y comprueba el ZIP universal, enlaza cinco pares GLSL y compila/prueba el bridge con Java 25. La CI no verifica la apariencia final ni la carga real del mod dentro del cliente de Minecraft; por eso este paquete queda como RC1 hasta completar esa comprobación visual.
+El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. La CI ejecuta la suite Python, construye y comprueba el ZIP universal, enlaza cinco pares GLSL y compila/prueba el bridge con Java 25. A esto se suma la prueba visual manual de v0.9.0, completada y aprobada por el autor. CI no simula todas las combinaciones del cliente real.
 
 La ruta heredada de ZIP específico por semilla sigue disponible para mundos donde se conozca la semilla original; no es necesaria para instalar ni usar el ZIP universal.
 
 ## Descargas v0.9
 
-- [**ZIP universal v0.9.0 RC1 — instalable sin modificar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip): fallback por temperatura del bioma si el bridge no está activo; no contiene la tabla climática de una semilla ajena.
+- [**ZIP universal v0.9.0 oficial — instalable sin modificar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip): fallback por temperatura del bioma si el bridge no está activo; sin el bridge, no simula el ruido espacial histórico de Beta.
 - [**Beta173 Climate Bridge 0.1.0 — Fabric 26.3 (opcional)**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar): port del ruido histórico mediante el uniforme `temperature` de Iris.
 - [**ZIP base v0.9.0-pre1 — instalable**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip): paquete general con fallback seguro; no activa una tabla climática de una semilla ajena.
 - [**Kit generador climático v0.9**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip): fuentes y herramienta para crear automáticamente el ZIP específico de tu mundo.
-- [**v0.8.1 — estable anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
+- [**v0.8.1 — versión anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
+- [**Paquete histórico v0.9.0 RC1**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip).
 
 Para usar el port climático reconstruido, descarga y extrae el kit; después ejecuta desde una terminal:
 
@@ -87,11 +88,11 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 - La lectura de `level.dat` solo funciona si la semilla está incluida en ese archivo. Para servidores o mundos con datos ocultos, usa `--seed` o el modo interactivo.
 - La comprobación del ZIP y las pruebas automáticas no sustituyen la revisión visual con la versión concreta de Minecraft, Iris y Sodium.
 
-Hasta verificar el color del cielo en varias coordenadas, durante el día/noche y bajo lluvia/tormenta, la v0.9 sigue siendo experimental.
+La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. Como seguimiento, se recomienda ampliar las pruebas en semillas, coordenadas y condiciones meteorológicas adicionales; eso no impide que v0.9.0 sea la versión oficial.
 
-## Versión estable v0.8.1
+## Versión oficial v0.9.0
 
-Para instalar la versión estable, descarga `Beta173-Lighting-0.8.1.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft#beta173-lighting). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**.
+Descarga `Beta173-Lighting-0.9.0.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft#beta173-lighting). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
 
 ## Pruebas
 
@@ -104,10 +105,10 @@ python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
 Las pruebas de ruido y generación de activos cubren la reproducibilidad de `java.util.Random`, valores de regresión, construcción del mapa de gradientes, lectura de semilla NBT y la generación temporal del paquete. Las pruebas no simulan el renderizador completo de Minecraft.
 
 
-## Estado de validación del RC1
+## Validación de la versión oficial v0.9.0
 
-- [Workflow universal y compilación del bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml): suite Python, empaquetado, integridad y enlace GLSL.
-- [Workflow independiente de compilación y pruebas del bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/build-climate-bridge.yml): build, test y artefactos Fabric.
-- [Checksum SHA-256 del RC1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/SHA256SUMS-v0.9-rc1.txt).
+- [Workflow universal de pruebas y empaquetado](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml): suite Python, construcción del ZIP, integridad y enlace GLSL.
+- [Workflow del Climate Bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/build-climate-bridge.yml): compilación y pruebas automatizadas del mod.
+- [Checksum SHA-256 de la versión oficial](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/SHA256SUMS-v0.9.0.txt).
 
-**Pendiente antes de llamarlo estable:** instalarlo en Minecraft 26.3 + Iris/Sodium y comprobar biomas fríos/templados/cálidos, transiciones entre biomas, día/noche, lluvia/tormenta, Nether/End, además de comprobar el bridge en singleplayer y verificar que el envío de semillas en servidores dedicados siga desactivado por defecto.
+**Prueba visual manual:** completada y aprobada por el autor dentro de Minecraft. Como control de calidad continuo, se recomienda probar nuevas semillas, transiciones de bioma y condiciones de clima. Esto es compatible con el estado oficial de v0.9.0 y no equivale a garantizar paridad píxel a píxel.
