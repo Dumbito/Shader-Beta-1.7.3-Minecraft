@@ -65,3 +65,15 @@ Las pruebas automatizadas comprueban invariantes y código fuente, no simulan to
 - [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip): perfiles de niebla históricos.
 
 Código de referencia: https://github.com/jacobo-mc/mc_b1.7.3_release
+
+
+## v0.9 experimental — reconstrucción climática de Beta
+
+La rama de investigación `feature/v0.9-exact-climate-noise` reconstruye la ruta de `World.getSkyColor` de Beta 1.7.3 en vez de sustituirla por el uniforme moderno `temperature`.
+
+- `WorldChunkManager` crea cuatro octavas de `NoiseGeneratorOctaves2` desde `new Random(worldSeed * 9871L)`.
+- `NoiseGenerator2` aporta los offsets, las permutaciones de `java.util.Random`, el ruido Simplex 2D y su ponderación por octava.
+- `BiomeGenBase.getSkyColorByTemp` conserva la conversión histórica HSB; lluvia, tormenta y ciclo diurno siguen usando las funciones ya portadas.
+- `tools/generate_climate_seed.py --seed <semilla>` genera el lookup de gradientes y los offsets específicos de ese mundo. El generador solo usa Python estándar.
+
+**Límite esencial:** Iris no expone un uniforme estándar para la semilla del mundo ni garantiza coordenadas X/Z absolutas persistentes en `cameraPosition`. Por ello el shader no puede reconstruir automáticamente el campo exacto en cualquier mundo solo con instalar el ZIP. Debes generar los recursos con el resultado de `/seed`. El shader usa `eyePosition` junto con `cameraPositionInt` y `cameraPositionFract` para reconstruir las coordenadas del jugador y reducir los errores por la cámara desplazada; el wrapping/reinicio todavía puede requerir corregir el origen. GLSL usa `float` mientras Beta calculaba con `double`, así que la fórmula y el campo se portan pero no prometemos igualdad bit a bit. La rama se mantiene experimental hasta verificar el resultado visual en Minecraft.

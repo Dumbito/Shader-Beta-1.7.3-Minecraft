@@ -3,6 +3,13 @@
 // (https://github.com/jacobo-mc/mc_b1.7.3_release)
 
 #include "/lib/config.glsl"
+#include "/lib/climate_seed.glsl"
+#include "/lib/climate_noise.glsl"
+
+uniform vec3 cameraPosition;
+uniform ivec3 cameraPositionInt;
+uniform vec3 cameraPositionFract;
+uniform vec3 eyePosition;
 
 uniform int worldTime;
 uniform float rainStrength;
@@ -80,16 +87,47 @@ float beta173LightLevel(vec2 lm) {
     return max(block, max(0.0, sky - beta173SkySubtracted()));
 }
 
-// Equivalente a java.awt.Color.getHSBColor
+// Port de java.awt.Color.getHSBColor / HSBtoRGB: sectores HSV y cuantizacion RGB de 8 bits.
 vec3 beta173Hsb(float h, float s, float b) {
-    vec3 k = vec3(1.0, 2.0 / 3.0, 1.0 / 3.0);
-    vec3 p = abs(fract(vec3(h) + k) * 6.0 - 3.0);
-    return b * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), s);
+    h = fract(h) * 6.0;
+    int sector = int(h);
+    float f = h - float(sector);
+    float p = b * (1.0 - s);
+    float q = b * (1.0 - s * f);
+    float t = b * (1.0 - s * (1.0 - f));
+    vec3 rgb;
+    if (sector == 0) rgb = vec3(b, t, p);
+    else if (sector == 1) rgb = vec3(q, b, p);
+    else if (sector == 2) rgb = vec3(p, b, t);
+    else if (sector == 3) rgb = vec3(p, q, b);
+    else if (sector == 4) rgb = vec3(t, p, b);
+    else rgb = vec3(b, p, q);
+    return floor(rgb * 255.0 + 0.5) / 255.0;
+}
+
+// Temperatura climática de Beta, basada en la semilla y las coordenadas X/Z del jugador.
+// En el pase del cielo se calcula en el vertex shader y se interpola como flat para no
+// recalcular el ruido cuatro-octavas en cada fragmento de pantalla.
+float beta173SkyClimateTemperature() {
+#if BETA_CLIMATE_SEED_CONFIGURED
+#ifdef BETA_CLIMATE_USE_VARYING
+    return beta173ClimateTemperatureVarying;
+#else
+    // Reconstruye la posición X/Z de la cabeza del jugador desde el origen entero/fraccional
+    // de la cámara y la diferencia camera->eye. Reduce errores en tercera persona y a distancias largas.
+    vec2 cameraWorldXZ = vec2(cameraPositionInt.xz) + cameraPositionFract.xz;
+    vec2 playerWorldXZ = cameraWorldXZ + (eyePosition.xz - cameraPosition.xz);
+    vec2 playerXZ = floor(playerWorldXZ + vec2(BETA_CLIMATE_ORIGIN_X, BETA_CLIMATE_ORIGIN_Z));
+    return beta173ClimateTemperature(playerXZ);
+#endif
+#else
+    return BETA_SKY_TEMPERATURE;
+#endif
 }
 
 // World.getSkyColor + BiomeGenBase.getSkyColorByTemp
 vec3 beta173SkyColor() {
-    float t = clamp(BETA_SKY_TEMPERATURE / 3.0, -1.0, 1.0);
+    float t = clamp(beta173SkyClimateTemperature() / 3.0, -1.0, 1.0);
     vec3 col = beta173Hsb(0.62222224 - t * 0.05, 0.5 + t * 0.1, 1.0) * beta173DayFactor();
 
     float rain = beta173Rain();

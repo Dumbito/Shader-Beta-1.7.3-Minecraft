@@ -14,6 +14,19 @@ Referencia de ingeniería inversa: [mc_b1.7.3_release](https://github.com/jacobo
 
 **Estado:** el código compila (glslang, 1200 combinaciones de opciones) y las pruebas pasan, pero **nada de esto se ha visto todavía dentro de Minecraft**. Las pruebas no demuestran fidelidad visual.
 
+## v0.9 experimental: ruido climático original de Beta
+
+Esta versión de desarrollo reconstruye el campo espacial que Beta 1.7.3 calculaba con `WorldChunkManager.getTemperature(x,z)`: cuatro octavas de Simplex 2D (`NoiseGeneratorOctaves2`) inicializadas con la semilla del mundo, sus offsets Java-Random, las permutaciones de gradiente y la fórmula HSB de `BiomeGenBase.getSkyColorByTemp`.
+
+**No se activa con la semilla de ejemplo.** El archivo incluido mantiene el modo neutral para que una instalación limpia no se haga pasar por una reproducción fiel. En la raíz del repositorio, ejecuta:
+
+```bash
+python3 Beta173-Lighting/tools/generate_climate_seed.py --seed <semilla-exacta-de-/seed>
+python3 Beta173-Lighting/tools/build_pack.py 0.9-climate
+```
+
+Usa el ZIP resultante únicamente con el mundo para el que generaste la textura. Si Iris ha reiniciado las coordenadas de `cameraPosition`, ajusta `--origin-x` y `--origin-z` y vuelve a generar. El port usa `eyePosition` con `cameraPositionInt`/`cameraPositionFract` para reconstruir la posición del jugador incluso si la cámara está desplazada; falta validar casos como vehículos y cambios de origen. GLSL `float` no reproduce bit a bit la aritmética `double` de Java. Falta comprobarlo visualmente en el cliente; esta rama no debe tratarse aún como lanzamiento estable.
+
 ## Instalación
 
 1. Copia `Beta173-Lighting-0.8.zip` (raíz del repositorio) sin descomprimir en la carpeta `shaderpacks` de tu instancia.
@@ -70,5 +83,5 @@ Las pruebas automatizadas no sustituyen una prueba visual en Minecraft.
 - Si Iris voltea la textura verticalmente al cargarla, las estrellas quedarían reflejadas respecto al original (mismo aspecto, otra disposición).
 - Las nubes conservan la geometría del motor; no se ha reconstruido el sistema de nubes de Beta (celdas de 12 bloques, desplazamiento, dos pasadas).
 - Sol, luna y fases de la luna siguen siendo los del juego moderno.
-- La temperatura del bioma sigue siendo una aproximación neutral.
+- El modo neutral es el fallback. El port climático v0.9 está en investigación y requiere generar la textura/offsets con la semilla del mundo; no se garantiza igualdad bit a bit ni coordenadas absolutas tras wrapping.
 - La propagación de luz y el motor moderno difieren de Beta 1.7.3.
