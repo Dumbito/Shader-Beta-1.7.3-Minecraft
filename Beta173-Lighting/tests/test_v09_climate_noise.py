@@ -113,6 +113,11 @@ class LegacyClimateTests(unittest.TestCase):
             self.assertLess(octave.offset_z, 256.0)
         self.assertNotEqual(a[0], b[0])
 
+    def test_first_octave_offsets_match_java_reference(self):
+        first = climate.create_octaves(123456789)[0]
+        self.assertAlmostEqual(first.offset_x, 251.06314645013387, places=13)
+        self.assertAlmostEqual(first.offset_z, 210.0285267002532, places=13)
+
     def test_climate_field_changes_with_world_coordinates(self):
         values = {climate.climate_temperature(777, x, -x) for x in range(-512, 513, 64)}
         self.assertGreater(len(values), 8)
@@ -198,6 +203,30 @@ class PackAutomationTests(unittest.TestCase):
         self.assertNotIn("customTexture.beta173ClimateGradient", props)
         seed = (ROOT / "shaders" / "lib" / "climate_seed.glsl").read_text(encoding="utf-8")
         self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 0", seed)
+
+
+class ShaderIntegrationTests(unittest.TestCase):
+    def test_fog_programs_evaluate_climate_per_vertex_not_per_fragment(self):
+        for name in ("gbuffers_terrain", "gbuffers_textured_lit"):
+            vertex = (ROOT / "shaders" / f"{name}.vsh").read_text(encoding="utf-8")
+            fragment = (ROOT / "shaders" / f"{name}.fsh").read_text(encoding="utf-8")
+            self.assertIn("flat out float beta173ClimateTemperatureVarying", vertex)
+            self.assertIn("beta173ClimateTemperatureVarying = beta173SkyClimateTemperature()", vertex)
+            self.assertIn("flat in float beta173ClimateTemperatureVarying", fragment)
+            self.assertIn("#define BETA_CLIMATE_USE_VARYING", fragment)
+            self.assertLess(fragment.index("#define BETA_CLIMATE_USE_VARYING"),
+                            fragment.index('#include "/lib/beta173.glsl"'))
+
+    def test_seed_specific_custom_texture_is_not_required_by_default_pack(self):
+        props = (ROOT / "shaders" / "shaders.properties").read_text(encoding="utf-8")
+        seed = (ROOT / "shaders" / "lib" / "climate_seed.glsl").read_text(encoding="utf-8")
+        noise = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")
+        beta = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        self.assertNotIn("customTexture.beta173ClimateGradient", props)
+        self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 0", seed)
+        self.assertIn("uniform sampler2D beta173ClimateGradient", noise)
+        self.assertIn("return floor(clamp(rgb, 0.0, 1.0) * 255.0) / 255.0;", beta)
+        self.assertIn("relativeEyePosition.xz", beta)
 
 
 if __name__ == "__main__":

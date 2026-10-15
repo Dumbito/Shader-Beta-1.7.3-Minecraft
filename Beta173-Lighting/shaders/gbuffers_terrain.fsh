@@ -1,5 +1,7 @@
 #version 330 compatibility
 
+flat in float beta173ClimateTemperatureVarying;
+#define BETA_CLIMATE_USE_VARYING
 #include "/lib/beta173.glsl"
 
 uniform sampler2D gtexture;

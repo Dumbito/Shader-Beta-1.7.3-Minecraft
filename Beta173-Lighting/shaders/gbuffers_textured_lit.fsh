@@ -2,6 +2,8 @@
 
 // En Iris, entidades, mano, items tirados, block entities y clima caen a este programa.
 
+flat in float beta173ClimateTemperatureVarying;
+#define BETA_CLIMATE_USE_VARYING
 #include "/lib/beta173.glsl"
 
 uniform sampler2D gtexture;
