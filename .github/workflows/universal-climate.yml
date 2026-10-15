@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 Beta173-Lighting/tools/build_pack.py 0.9.0-universal-rc1
+          python3 Beta173-Lighting/tools/build_pack.py 0.9.0
           # The committed lookup PNG belongs to one seed and must not ship in the universal pack.
           if unzip -Z1 Beta173-Lighting-0.9.0.zip | grep -q '^shaders/textures/beta173_climate_gradient.png$'; then
             zip -q -d Beta173-Lighting-0.9.0.zip 'shaders/textures/beta173_climate_gradient.png'
