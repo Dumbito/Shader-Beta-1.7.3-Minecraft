@@ -57,15 +57,15 @@ jobs:
           python3 Beta173-Lighting/tools/build_pack.py 1.0.0
           # The committed lookup PNG belongs to one seed and must not ship in the universal pack.
           if unzip -Z1 Beta173-Lighting-1.0.0.zip | grep -q '^shaders/textures/beta173_climate_gradient.png$'; then
-            zip -q -d Beta173-Lighting-0.9.1.zip 'shaders/textures/beta173_climate_gradient.png'
+            zip -q -d Beta173-Lighting-1.0.0.zip 'shaders/textures/beta173_climate_gradient.png'
           fi
-          unzip -t Beta173-Lighting-0.9.1.zip
-          if unzip -Z1 Beta173-Lighting-0.9.1.zip | grep -q '^shaders/textures/beta173_climate_gradient.png$'; then
+          unzip -t Beta173-Lighting-1.0.0.zip
+          if unzip -Z1 Beta173-Lighting-1.0.0.zip | grep -q '^shaders/textures/beta173_climate_gradient.png$'; then
             echo "Error: universal ZIP contains a climate lookup tied to a specific seed"
             exit 1
           fi
           mkdir -p /tmp/beta173-universal
-          unzip -q Beta173-Lighting-0.9.1.zip -d /tmp/beta173-universal
+          unzip -q Beta173-Lighting-1.0.0.zip -d /tmp/beta173-universal
           python3 - <<'PY'
           from pathlib import Path
           root = Path("/tmp/beta173-universal")
@@ -107,8 +107,8 @@ jobs:
       - name: Upload official universal shaderpack v1.0.0
         uses: actions/upload-artifact@v4
         with:
-          name: Beta173-Lighting-0.9.1
-          path: Beta173-Lighting-0.9.1.zip
+          name: Beta173-Lighting-1.0.0
+          path: Beta173-Lighting-1.0.0.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -153,7 +153,7 @@ jobs:
       - name: Download universal shaderpack
         uses: actions/download-artifact@v4
         with:
-          name: Beta173-Lighting-0.9.1
+          name: Beta173-Lighting-1.0.0
           path: /tmp/beta173-shaderpack
 
       - name: Download climate bridge
@@ -166,18 +166,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f /tmp/beta173-shaderpack/Beta173-Lighting-0.9.1.zip
+          test -f /tmp/beta173-shaderpack/Beta173-Lighting-1.0.0.zip
           test -f /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar
           # Another publishing workflow may have advanced main while these jobs ran.
           # Rebase asset publication on the latest main to avoid a non-fast-forward push.
           git fetch origin main
           git reset --hard origin/main
-          cp /tmp/beta173-shaderpack/Beta173-Lighting-0.9.1.zip .
+          cp /tmp/beta173-shaderpack/Beta173-Lighting-1.0.0.zip .
           cp /tmp/beta173-bridge/beta173-climate-bridge-0.1.0.jar Beta173-Climate-Bridge-0.1.0-mc26.3.jar
-          sha256sum Beta173-Lighting-0.9.1.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar > SHA256SUMS-v1.0.0.txt
+          sha256sum Beta173-Lighting-1.0.0.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar > SHA256SUMS-v1.0.0.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Beta173-Lighting-0.9.1.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar SHA256SUMS-v0.9.1.txt
+          git add Beta173-Lighting-1.0.0.zip Beta173-Climate-Bridge-0.1.0-mc26.3.jar SHA256SUMS-v1.0.0.txt
           if git diff --cached --quiet; then
             echo "Candidate assets already published; no commit needed."
             exit 0
