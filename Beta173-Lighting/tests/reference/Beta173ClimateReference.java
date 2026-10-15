@@ -177,12 +177,12 @@ public final class Beta173ClimateReference {
                     case "C": {
                         long seed = Long.parseLong(p[1]);
                         int x = Integer.parseInt(p[2]), z = Integer.parseInt(p[3]);
-                        System.out.println("C\\t" + seed + "\\t" + x + "\\t" + z + "\\t" + d(climateTemperature(seed,x,z)));
+                        System.out.println("C\t" + seed + "\t" + x + "\t" + z + "\t" + d(climateTemperature(seed,x,z)));
                         break;
                     }
                     case "K": {
                         int rgb = skyBaseRgb(Double.parseDouble(p[1]));
-                        System.out.println("K\\t" + p[1] + "\\t" + ((rgb>>16)&255) + "\\t" + ((rgb>>8)&255) + "\\t" + (rgb&255));
+                        System.out.println("K\t" + p[1] + "\t" + ((rgb>>16)&255) + "\t" + ((rgb>>8)&255) + "\t" + (rgb&255));
                         break;
                     }
                     case "S": {
@@ -190,21 +190,21 @@ public final class Beta173ClimateReference {
                         long time=Long.parseLong(p[4]); float partial=Float.parseFloat(p[5]), rain=Float.parseFloat(p[6]), thunder=Float.parseFloat(p[7]);
                         float[] v=skyColor(seed,x,z,time,partial,rain,thunder);
                         int sub=skySubtracted(time,partial,rain,thunder); float stars=starBrightness(time,partial);
-                        System.out.println("S\\t"+seed+"\\t"+x+"\\t"+z+"\\t"+time+"\\t"+f(partial)+"\\t"+f(rain)+"\\t"+f(thunder)+"\\t"+
-                            d(climateTemperature(seed,x,z))+"\\t"+f(v[0])+"\\t"+f(v[1])+"\\t"+f(v[2])+"\\t"+f(v[3])+"\\t"+f(v[4])+"\\t"+
-                            sub+"\\t"+f(stars)+"\\t"+((int)(v[0]*255))+"\\t"+((int)(v[1]*255))+"\\t"+((int)(v[2]*255)));
+                        System.out.println("S\t"+seed+"\t"+x+"\t"+z+"\t"+time+"\t"+f(partial)+"\t"+f(rain)+"\t"+f(thunder)+"\t"+
+                            d(climateTemperature(seed,x,z))+"\t"+f(v[0])+"\t"+f(v[1])+"\t"+f(v[2])+"\t"+f(v[3])+"\t"+f(v[4])+"\t"+
+                            sub+"\t"+f(stars)+"\t"+((int)(v[0]*255))+"\t"+((int)(v[1]*255))+"\t"+((int)(v[2]*255)));
                         break;
                     }
                     case "F": {
                         long time=Long.parseLong(p[1]); float partial=Float.parseFloat(p[2]), rain=Float.parseFloat(p[3]), thunder=Float.parseFloat(p[4]);
-                        System.out.println("F\\t"+time+"\\t"+f(partial)+"\\t"+f(rain)+"\\t"+f(thunder)+"\\t"+
-                            f(celestialAngle(time,partial))+"\\t"+f(dayFactor(time,partial))+"\\t"+
-                            skySubtracted(time,partial,rain,thunder)+"\\t"+f(starBrightness(time,partial)));
+                        System.out.println("F\t"+time+"\t"+f(partial)+"\t"+f(rain)+"\t"+f(thunder)+"\t"+
+                            f(celestialAngle(time,partial))+"\t"+f(dayFactor(time,partial))+"\t"+
+                            skySubtracted(time,partial,rain,thunder)+"\t"+f(starBrightness(time,partial)));
                         break;
                     }
                     case "B": {
                         int level=Integer.parseInt(p[1]); float ambient=Float.parseFloat(p[2]);
-                        System.out.println("B\\t"+level+"\\t"+f(ambient)+"\\t"+f(brightness(level,ambient)));
+                        System.out.println("B\t"+level+"\t"+f(ambient)+"\t"+f(brightness(level,ambient)));
                         break;
                     }
                     default: throw new IllegalArgumentException("Comando desconocido: " + p[0]);
