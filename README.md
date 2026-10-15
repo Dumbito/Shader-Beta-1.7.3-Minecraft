@@ -18,12 +18,13 @@
 
 **Estado: experimental. La descarga estable sigue siendo v0.8.1.** La reconstrucción climática está en `main`, pero todavía necesita verificación visual en Minecraft antes de poder llamarse un lanzamiento estable. No existe un ZIP universal preconfigurado para todos los mundos: la permutación histórica del ruido depende de la semilla de cada mundo.
 
-La nueva ruta evita usar el uniforme moderno \`temperature\` como sustituto. Reconstruye la cadena histórica:
+La nueva ruta evita usar el uniforme moderno `temperature` como sustituto. Reconstruye la cadena histórica:
 
-- \`World.getSkyColor(x,z)\` pide la temperatura espacial en las coordenadas X/Z del jugador.
-- \`WorldChunkManager.getTemperature\` combina cuatro octavas de \`NoiseGeneratorOctaves2\`, inicializadas desde \`new Random(worldSeed * 9871L)\`.
-- Cada \`NoiseGenerator2\` aporta offsets, la permutación de \`java.util.Random\`, los gradientes Simplex 2D y las ponderaciones históricas por octava.
-- \`BiomeGenBase.getSkyColorByTemp\` aplica HSB y cuantiza cada canal RGB a 8 bits como Java; después continúan la atenuación diurna, la lluvia y la tormenta portadas en versiones anteriores.
+- `World.getSkyColor(x,z)` pide la temperatura espacial en las coordenadas X/Z del jugador.
+- `WorldChunkManager.getTemperature` combina cuatro octavas de `NoiseGeneratorOctaves2`, inicializadas desde `new Random(worldSeed * 9871L)`.
+- Cada `NoiseGenerator2` aporta offsets, la permutación de `java.util.Random`, los gradientes Simplex 2D y las ponderaciones históricas por octava.
+- `BiomeGenBase.getSkyColorByTemp` aplica HSB y cuantiza cada canal RGB a 8 bits como Java; después continúan la atenuación diurna, la lluvia y la tormenta portadas en versiones anteriores.
+- Para evitar multiplicar el coste del ruido por cada píxel, la temperatura del jugador se calcula por vértice y se pasa como valor plano a los programas de terreno y entidades que aplican niebla.
 
 ### Crear tu ZIP climático sin editar líneas de código
 
@@ -31,37 +32,37 @@ Elige la forma más cómoda. No es necesario abrir ni modificar archivos GLSL, n
 
 **A. Leer la semilla desde un mundo local**
 
-\`\`\`bash
+```bash
 python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo"
-\`\`\`
+```
 
-Pasa la carpeta del mundo o directamente su archivo \`level.dat\`. La herramienta intenta extraer \`Data.WorldGenSettings.seed\` en mundos modernos y \`Data.RandomSeed\` en formatos clásicos.
+Pasa la carpeta del mundo o directamente su archivo `level.dat`. La herramienta intenta extraer `Data.WorldGenSettings.seed` en mundos modernos y `Data.RandomSeed` en formatos clásicos.
 
-**B. Usar el número de \`/seed\`**
+**B. Usar el número de `/seed`**
 
-\`\`\`bash
+```bash
 python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789
-\`\`\`
+```
 
-Sustituye \`123456789\` por la semilla exacta de tu mundo, incluido el signo si es negativa. Esta opción es útil en servidores o cuando el archivo local no contiene la semilla.
+Sustituye `123456789` por la semilla exacta de tu mundo, incluido el signo si es negativa. Esta opción es útil en servidores o cuando el archivo local no contiene la semilla.
 
 **C. Dejar que la herramienta la pida**
 
-\`\`\`bash
+```bash
 python3 Beta173-Lighting/tools/configure_climate_pack.py
-\`\`\`
+```
 
-Copia el número que muestra \`/seed\` cuando aparezca la solicitud.
+Copia el número que muestra `/seed` cuando aparezca la solicitud.
 
-Por defecto, el ZIP se guarda en el directorio actual. Para indicar una carpeta, añade por ejemplo \`--output-dir "$HOME/Descargas"\`. La herramienta trabaja sobre una copia temporal: genera la tabla climática y los offsets, configura la textura Iris y construye/valida el ZIP sin modificar los archivos originales del repositorio. El nombre del ZIP incluye la semilla para distinguirlo.
+Por defecto, el ZIP se guarda en el directorio actual. Para indicar una carpeta, añade por ejemplo `--output-dir "$HOME/Descargas"`. La herramienta trabaja sobre una copia temporal: genera la tabla climática y los offsets, configura la textura Iris y construye/valida el ZIP sin modificar los archivos originales del repositorio. El nombre del ZIP incluye la semilla para distinguirlo.
 
-Instala el ZIP resultante en la carpeta \`shaderpacks\` de la instancia con la que juegas **ese mismo mundo**. Al cambiar de mundo con una semilla distinta, genera otro ZIP con esa semilla.
+Instala el ZIP resultante en la carpeta `shaderpacks` de la instancia con la que juegas **ese mismo mundo**. Al cambiar de mundo con una semilla distinta, genera otro ZIP con esa semilla.
 
 ### Qué está reconstruido y qué falta validar
 
-La estructura del ruido, sus cuatro octavas, la inicialización de aleatoriedad, la tabla de gradientes y la conversión histórica del color están implementadas. El cálculo usa las coordenadas enteras de cámara no desplazadas que expone Iris y recupera la fracción de posición, lo que evita depender del uniforme \`cameraPosition\` que se reinicia para mantener precisión.
+La estructura del ruido, sus cuatro octavas, la inicialización de aleatoriedad, la tabla de gradientes y la conversión histórica del color están implementadas. El cálculo usa las coordenadas enteras de cámara no desplazadas que expone Iris y recupera la fracción de posición, lo que evita depender del uniforme `cameraPosition` que se reinicia para mantener precisión.
 
-Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con \`double\`, mientras que el shader usa \`float\`; los errores de precisión pueden importar cerca de los límites de cuantización RGB. La validación matemática y el empaquetado deben complementarse con una prueba visual en el cliente, en varias coordenadas, horas y condiciones meteorológicas. La versión estable descargable continúa siendo v0.8.1 hasta completar esa validación.
+Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con `double`, mientras que el shader usa `float`; los errores de precisión pueden importar cerca de los límites de cuantización RGB. La validación matemática y el empaquetado deben complementarse con una prueba visual en el cliente, en varias coordenadas, horas y condiciones meteorológicas. La versión estable descargable continúa siendo v0.8.1 hasta completar esa validación.
 
 ---
 
