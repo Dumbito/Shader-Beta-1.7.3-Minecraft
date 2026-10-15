@@ -1,79 +1,509 @@
-# Beta173 Lighting — Minecraft Beta 1.7.3
+# Beta173 Lighting
+### Reconstruyendo la iluminación, el cielo y la atmósfera de Minecraft Beta 1.7.3 en Minecraft moderno
 
-Proyecto experimental para reconstruir parte del aspecto de Minecraft Beta 1.7.3 en Minecraft moderno mediante Iris, priorizando la iluminación por niveles, la niebla histórica y el cielo clásico.
+<p align="center">
+  <strong>Un proyecto experimental de ingeniería inversa visual, traducción matemática y shaders GLSL para Iris.</strong>
+</p>
 
-## Última versión: v0.8.1 — Dimension Fog & Cloud Height
+<p align="center">
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía v0.9.0-pre1</a> ·
+  <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
+</p>
 
-**[⬇ Descargar Beta173-Lighting v0.8.1 (.zip)](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip)**
+---
 
-### Cambios de v0.8.1
+## 🧪 v0.9.0-pre1 — reconstrucción del campo climático de Beta 1.7.3
 
-- Añade rutas de niebla específicas por dimensión: el Overworld conserva el perfil histórico de Beta, el Nether usa niebla roja y el End utiliza los parámetros nativos de niebla expuestos por Iris.
-- Ajusta la luz ambiental por dimensión, diferenciando el Nether del End mediante los uniformes de Iris.
-- Remapea la altura de las nubes a **Y=260.99** para el rango vertical del Overworld moderno. Es una adaptación fija, no una altura dinámica según el relieve.
-- Conserva el sombreado inspirado en Beta para las caras de las nubes: superior 1.0, inferior 0.7 y laterales 0.9/0.8.
-- Mantiene las estrellas de Beta y el ciclo de color de nubes introducidos en v0.8.
-- El ZIP contiene los shaders compilados a nivel de paquete, sin directivas `#include` pendientes.
+**Estado: experimental. La descarga estable sigue siendo v0.8.1.** La reconstrucción climática está en `main`, pero todavía necesita verificación visual en Minecraft antes de poder llamarse un lanzamiento estable. No existe un ZIP universal preconfigurado para todos los mundos: la permutación histórica del ruido depende de la semilla de cada mundo.
 
-**Validación automatizada:** 27 pruebas pasaron; la integridad del ZIP y cinco pares de programas GLSL también se validaron. Esto no sustituye la comprobación visual dentro de Minecraft con la versión concreta de Iris/Sodium.
+La nueva ruta evita usar el uniforme moderno \`temperature\` como sustituto. Reconstruye la cadena histórica:
 
-### Instalación
+- \`World.getSkyColor(x,z)\` pide la temperatura espacial en las coordenadas X/Z del jugador.
+- \`WorldChunkManager.getTemperature\` combina cuatro octavas de \`NoiseGeneratorOctaves2\`, inicializadas desde \`new Random(worldSeed * 9871L)\`.
+- Cada \`NoiseGenerator2\` aporta offsets, la permutación de \`java.util.Random\`, los gradientes Simplex 2D y las ponderaciones históricas por octava.
+- \`BiomeGenBase.getSkyColorByTemp\` aplica HSB y cuantiza cada canal RGB a 8 bits como Java; después continúan la atenuación diurna, la lluvia y la tormenta portadas en versiones anteriores.
 
-1. Descarga `Beta173-Lighting-0.8.1.zip` desde el enlace superior.
-2. Copia el ZIP, sin descomprimir, en la carpeta `shaderpacks` de tu instancia de Minecraft.
-3. Inicia Minecraft con Iris.
-4. En **Opciones → Ajustes de vídeo → Shader Packs**, selecciona **Beta173-Lighting-0.8.1**.
-5. Comprueba el cielo, las nubes y la niebla en el Overworld, Nether y End.
+### Crear tu ZIP climático sin editar líneas de código
 
-### Perfiles de niebla
+Elige la forma más cómoda. No es necesario abrir ni modificar archivos GLSL, ni reemplazar texturas manualmente.
 
-Edita `shaders/lib/config.glsl` si quieres cambiar el perfil histórico del Overworld:
+**A. Leer la semilla desde un mundo local**
+
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo"
+\`\`\`
+
+Pasa la carpeta del mundo o directamente su archivo \`level.dat\`. La herramienta intenta extraer \`Data.WorldGenSettings.seed\` en mundos modernos y \`Data.RandomSeed\` en formatos clásicos.
+
+**B. Usar el número de \`/seed\`**
+
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789
+\`\`\`
+
+Sustituye \`123456789\` por la semilla exacta de tu mundo, incluido el signo si es negativa. Esta opción es útil en servidores o cuando el archivo local no contiene la semilla.
+
+**C. Dejar que la herramienta la pida**
+
+\`\`\`bash
+python3 Beta173-Lighting/tools/configure_climate_pack.py
+\`\`\`
+
+Copia el número que muestra \`/seed\` cuando aparezca la solicitud.
+
+Por defecto, el ZIP se guarda en el directorio actual. Para indicar una carpeta, añade por ejemplo \`--output-dir "$HOME/Descargas"\`. La herramienta trabaja sobre una copia temporal: genera la tabla climática y los offsets, configura la textura Iris y construye/valida el ZIP sin modificar los archivos originales del repositorio. El nombre del ZIP incluye la semilla para distinguirlo.
+
+Instala el ZIP resultante en la carpeta \`shaderpacks\` de la instancia con la que juegas **ese mismo mundo**. Al cambiar de mundo con una semilla distinta, genera otro ZIP con esa semilla.
+
+### Qué está reconstruido y qué falta validar
+
+La estructura del ruido, sus cuatro octavas, la inicialización de aleatoriedad, la tabla de gradientes y la conversión histórica del color están implementadas. El cálculo usa las coordenadas enteras de cámara no desplazadas que expone Iris y recupera la fracción de posición, lo que evita depender del uniforme \`cameraPosition\` que se reinicia para mantener precisión.
+
+Aun así, esto **no promete igualdad bit a bit**: Java hace el cálculo climático con \`double\`, mientras que el shader usa \`float\`; los errores de precisión pueden importar cerca de los límites de cuantización RGB. La validación matemática y el empaquetado deben complementarse con una prueba visual en el cliente, en varias coordenadas, horas y condiciones meteorológicas. La versión estable descargable continúa siendo v0.8.1 hasta completar esa validación.
+
+---
+
+## 🌌 ¿Qué es Beta173 Lighting?
+
+**Beta173 Lighting es un shaderpack experimental que intenta recuperar parte del comportamiento visual de Minecraft Java Edition Beta 1.7.3 y reproducirlo en una versión moderna del juego mediante Iris y GLSL.**
+
+No pretende ser una copia exacta del motor antiguo ni un mod que sustituya el código interno de Minecraft. El proyecto selecciona sistemas concretos del renderizado histórico —la curva de iluminación, la pérdida de luz del cielo, el color del cielo y de la niebla, el ciclo de las estrellas y el aspecto de las nubes— y los vuelve a expresar como programas de shader compatibles con la arquitectura moderna.
+
+La idea central es sencilla:
+
+> **No basta con hacer que Minecraft moderno se vea “retro”. Queremos estudiar cómo calculaba Beta 1.7.3 determinados efectos y trasladar esas reglas, hasta donde permite un shaderpack, al pipeline gráfico actual.**
+
+Este objetivo combina tres trabajos que se complementan:
+
+1. **Investigación del comportamiento histórico:** localizar las funciones relevantes en el código Java de referencia y entender qué entradas y operaciones producen un resultado visual.
+2. **Portado matemático:** expresar esas operaciones en GLSL, adaptando sus entradas a los uniformes, texturas, coordenadas y etapas de renderizado disponibles en Iris.
+3. **Validación y experimentación:** probar las ecuaciones con Python, protegerlas mediante pruebas de regresión, comprobar el empaquetado, validar los programas GLSL cuando sea posible y, finalmente, inspeccionar su apariencia dentro del juego.
+
+El resultado es una reconstrucción progresiva, no una afirmación de equivalencia total. Cada versión añade una parte del comportamiento, descubre límites del pipeline moderno y corrige las discrepancias que vamos identificando.
+
+## 🧭 Índice
+
+- [La inspiración y las referencias](#-la-inspiración-y-las-referencias)
+- [Qué proyectos y tecnologías utilizamos](#-qué-proyectos-y-tecnologías-utilizamos)
+- [Cómo trasladamos Beta a un motor moderno](#-cómo-trasladamos-beta-a-un-motor-moderno)
+- [Los sistemas que reconstruimos](#-los-sistemas-que-reconstruimos)
+- [Historia completa: v0.1–v0.9.0-pre1](#-historia-completa-v01v090-pre1)
+- [Arquitectura del repositorio](#-arquitectura-del-repositorio)
+- [Configuración](#️-configuración)
+- [Instalación](#-instalación)
+- [Pruebas y validación](#-pruebas-y-validación)
+- [Limitaciones conocidas](#️-limitaciones-conocidas)
+- [Objetivos futuros](#-objetivos-futuros)
+- [Créditos y referencias](#-créditos-y-referencias)
+
+---
+
+## ✨ La inspiración y las referencias
+
+### Minecraft Beta 1.7.3: el objetivo visual e histórico
+
+La inspiración principal es **Minecraft Java Edition Beta 1.7.3**. El interés no está únicamente en sus texturas o en una estética pixelada; está en la forma en que se comportaban la iluminación y la atmósfera del juego.
+
+En Beta, el aspecto de una escena estaba relacionado con reglas concretas: una tabla de brillo con una curva determinada, un ángulo celeste suavizado, una reducción de luz del cielo a lo largo del día, ajustes por lluvia y tormenta, una transición entre el cielo y la niebla, y un ciclo de brillo para las estrellas. El renderizado de las nubes también tenía una respuesta de color y factores de sombreado específicos.
+
+Beta173 Lighting toma esas reglas como **referencia de comportamiento**, no como una orden de replicar indiscriminadamente cada efecto del juego original. Priorizamos los componentes que pueden estudiarse y aproximarse razonablemente dentro de un shaderpack moderno.
+
+### El código Java reconstruido de Beta 1.7.3
+
+La referencia técnica directa que documenta el proyecto es [jacobo-mc/mc_b1.7.3_release](https://github.com/jacobo-mc/mc_b1.7.3_release), una reconstrucción del código fuente de Minecraft Beta 1.7.3.
+
+Consultamos métodos y clases como:
+
+- <code>WorldProvider</code>: tabla de brillo, ángulo celeste y propiedades del mundo.
+- <code>WorldProviderHell</code>: diferencias históricas del Nether, como su iluminación ambiental.
+- <code>World</code>: atenuación de la luz del cielo y brillo de las estrellas.
+- <code>EntityRenderer</code>: color de niebla y configuración histórica de determinados efectos.
+- <code>RenderGlobal</code>: generación de estrellas y renderizado de nubes.
+- <code>World.drawClouds</code> y la rutina de nubes de <code>RenderGlobal</code>: comportamiento de color y factores por cara de las nubes.
+
+Los nombres exactos pueden variar entre versiones o reconstrucciones, por lo que la referencia se usa para estudiar la lógica y contrastar sus fórmulas.
+
+**Esta referencia no es un motor que Beta173 Lighting ejecute en tiempo real.** No se introduce un segundo Minecraft, no se llama al código Java histórico desde el shader y no se necesita compilar la referencia para jugar. Se transcriben las operaciones relevantes y se reimplementan en otro lenguaje y en otro punto de la arquitectura.
+
+### ¿Qué significa “inspirado por” y qué significa “tomado de”?
+
+Es importante distinguir tres cosas:
+
+| Elemento | Función en este proyecto |
+|---|---|
+| Minecraft Beta 1.7.3 | Es la referencia histórica y visual que intentamos aproximar. |
+| <code>mc_b1.7.3_release</code> | Es la fuente de consulta para investigar las fórmulas y el comportamiento Java. |
+| Iris, GLSL y el pipeline moderno | Son el entorno técnico donde se implementan de nuevo esas reglas. |
+
+El historial del proyecto incluye el uso inicial de un repositorio de referencia y su posterior exclusión del árbol principal del proyecto. El shaderpack publicado no necesita ese repositorio de referencia como dependencia durante la partida. Las funciones relevantes se expresan de nuevo para el shaderpack.
+
+Esto no significa que cada idea matemática sea nueva: precisamente intentamos reproducir resultados históricos. Por eso damos crédito a la referencia y diferenciamos claramente entre **usar código como fuente de estudio** e **incluir o ejecutar ese código como parte del producto**.
+
+---
+
+## 🧰 Qué proyectos y tecnologías utilizamos
+
+### Iris Shaders: el cargador y la interfaz de shaders
+
+[Iris Shaders](https://github.com/IrisShaders/Iris) proporciona la infraestructura para cargar shaderpacks y expone al shader una serie de datos del renderizado. Beta173 Lighting se organiza como programas GLSL que Iris ejecuta en las etapas correspondientes.
+
+Según la etapa y la versión, el shader puede recibir datos como la hora del mundo, la intensidad de lluvia, información sobre la dimensión, coordenadas de la textura de iluminación, color de vértice, matrices de cámara o parámetros de niebla. Esos datos hacen posible reconstruir parte del comportamiento histórico sin cambiar el código Java del juego.
+
+El contrato real depende de la versión de Iris y del pipeline que esté utilizando. Por eso comprobar un archivo GLSL aislado no garantiza que todos los uniformes se comporten igual en cualquier versión.
+
+### Sodium: rendimiento del renderizado moderno
+
+[Sodium](https://github.com/CaffeineMC/sodium) forma parte del entorno moderno en el que se prueba el shaderpack. No es el motor histórico de Beta ni el origen de las fórmulas: es una parte del entorno de renderizado actual.
+
+La combinación concreta de Minecraft, Iris y Sodium puede afectar a qué geometría, etapas y datos llegan al shader. Por eso el proyecto incluye comprobaciones estáticas, pero reserva la última palabra sobre el aspecto visual a la prueba dentro del juego.
+
+### GLSL: volver a escribir las reglas, no llamar al código antiguo
+
+Los shaders están escritos en GLSL. Funciones como <code>beta173Brightness</code>, <code>beta173CelestialAngle</code>, <code>beta173SkySubtracted</code>, <code>beta173FogColor</code> y <code>beta173ApplyFog</code> representan operaciones portadas a este lenguaje.
+
+Una función Java del pasado no se convierte automáticamente en un shader correcto. Hay que identificar qué datos tenía la función original, qué parte de esos datos está disponible en GPU y qué diferencias aparecen al transformar coordenadas, rangos numéricos, interpolaciones, colores y etapas de mezcla.
+
+### Python y las herramientas de construcción
+
+Python cumple dos funciones principales:
+
+- **Validación:** pruebas numéricas, comparaciones diferenciales, comprobaciones de invariantes y pruebas de regresión para proteger los comportamientos que ya se han reconstruido.
+- **Construcción:** generación del mapa de estrellas y empaquetado final del shaderpack.
+
+El script <code>Beta173-Lighting/tools/build_pack.py</code> resuelve los <code>#include</code> utilizados durante el desarrollo e incrusta las bibliotecas en los programas finales. Así se evita que el ZIP dependa de que el ordenador de cada jugador resuelva esas directivas de inclusión.
+
+---
+
+## 🔬 Cómo trasladamos Beta a un motor moderno
+
+Un shaderpack no tiene acceso a todo lo que hacía el motor Java histórico. Esa restricción determina tanto el diseño como los límites de la reconstrucción.
+
+### 1. Investigar la regla original
+
+Primero localizamos la función de referencia y aislamos la operación que interesa. Por ejemplo, una curva de brillo puede depender del nivel de luz; la atenuación del cielo depende del ciclo celeste y del clima; el color de niebla puede mezclar un color base con el del cielo y modificarse por lluvia o tormenta.
+
+No tratamos una captura de pantalla como especificación matemática suficiente: el objetivo es identificar la regla que podría producir el comportamiento observado.
+
+### 2. Separar los datos históricos de los datos del motor moderno
+
+Beta 1.7.3 y Minecraft actual no presentan al shader los mismos datos con la misma semántica. El shaderpack debe tomar las entradas modernas que sí existen y convertirlas, cuando es posible, a los rangos que espera la fórmula histórica.
+
+Por ejemplo, el shader recibe coordenadas de una textura de iluminación moderna. Para aproximar niveles históricos discretos, las normaliza, limita el rango y las traduce a una escala de 0 a 15. Esto recupera una representación útil para la fórmula, pero **no recrea la propagación original de la luz por el mundo**.
+
+### 3. Traducir la ecuación a GLSL
+
+La matemática se vuelve una función de shader. El caso de la iluminación contiene una curva de brillo; el del ciclo celeste mantiene las operaciones de normalización y suavizado angular; la atenuación de cielo combina el factor del día con lluvia y tormenta.
+
+En esta fase también se decide dónde aplicar cada operación. Una función de iluminación aplicada a terreno no afecta por sí sola a la mano, los objetos, las entidades o las nubes: cada grupo puede recorrer una etapa diferente del pipeline de Iris. Para cubrir varios grupos se necesitan programas compatibles con esas etapas.
+
+### 4. Adaptar las dimensiones y las propiedades del motor
+
+Los datos de Iris ayudan a distinguir escenarios que históricamente se calculaban dentro de Java. En v0.8.1, por ejemplo, el shader comprueba si la dimensión tiene luz de cielo y si tiene techo. Con esa información separa la ruta del Nether de la del End.
+
+Esto evita asumir que todas las dimensiones sin cielo deben compartir el mismo aspecto. Para el Nether se conserva una aproximación histórica de niebla rojiza; para el End se recurre a parámetros nativos de niebla que expone el motor moderno. En el Overworld se mantiene el perfil histórico de niebla desarrollado para el proyecto.
+
+### 5. Proteger la traducción con pruebas
+
+Cada corrección puede deshacer accidentalmente una fórmula anterior. Por eso las pruebas reflejan las ecuaciones en Python y comparan resultados en varias horas del ciclo o condiciones meteorológicas. Otras pruebas comprueban que existan funciones y constantes esperadas y que el ZIP tenga el formato previsto.
+
+Las pruebas responden preguntas acotadas: ¿coincide la ecuación transcrita?, ¿se mantiene dentro del rango?, ¿está resuelto el empaquetado?, ¿quedan directivas <code>#include</code>? No responden por sí solas si una nube se ve natural desde arriba o si el color del cielo es idéntico en una partida real.
+
+### El flujo, de la referencia al juego
+
+~~~mermaid
+flowchart TD
+    A["Código Java de referencia de Beta 1.7.3"] --> B["Identificar función y comportamiento"]
+    B --> C["Transcribir la regla matemática"]
+    C --> D["Adaptar entradas y coordenadas a Iris"]
+    D --> E["Implementar funciones GLSL"]
+    E --> F["Pruebas numéricas y de regresión en Python"]
+    F --> G["Construir ZIP e incrustar includes"]
+    G --> H["Validar integridad y programas GLSL"]
+    H --> I["Probar visualmente en Minecraft + Iris + Sodium"]
+    I --> J["Registrar diferencias y corregir"]
+    J --> B
+~~~
+
+Este ciclo es iterativo. Una versión nueva no implica que todo el juego se haya reconstruido: representa un conjunto concreto de sistemas implementados o corregidos.
+
+---
+
+## 💡 Los sistemas que reconstruimos
+
+### Iluminación por niveles
+
+La curva de brillo histórica se expresa como una función que recibe un nivel de iluminación entre 0 y 15 y devuelve su brillo. El proyecto aplica esa curva a la luz recuperada desde el lightmap moderno.
+
+En términos conceptuales, el flujo es:
+
+1. Leer las coordenadas de luz proporcionadas por el pipeline moderno.
+2. Convertirlas a una escala que represente los niveles históricos.
+3. Calcular la luz efectiva combinando luz de bloque y luz de cielo atenuada.
+4. Evaluar la curva de brillo de Beta.
+5. Multiplicar el color del material por ese brillo.
+
+No significa que Minecraft moderno pase a almacenar sus niveles de luz internamente como lo hacía Beta. Es una traducción en la etapa del shader.
+
+### Ciclo celeste y atenuación de la luz del cielo
+
+La función <code>beta173CelestialAngle</code> adapta la interpolación del ángulo celeste de Beta a GLSL. <code>beta173DayFactor</code> deriva de ese ángulo un factor acotado para el día. <code>beta173SkySubtracted</code> reduce la luz del cielo según hora y clima, con atenuación adicional por lluvia y tormenta cuando corresponde.
+
+Estas funciones compartidas permiten que iluminación, cielo, estrellas y niebla se apoyen en una misma referencia temporal. Así se evita crear por separado varios ciclos que podrían divergir entre sí.
+
+### Cielo y niebla
+
+El color del cielo se reconstruye con una aproximación del color HSB usado por el código Java, un factor de día y ajustes por clima. También se reconstruye una transición entre el color de cielo y el de niebla hacia el horizonte.
+
+La niebla histórica del Overworld usa una progresión lineal en aire, con el inicio situado en una fracción de la distancia final configurada. El comportamiento en agua y lava usa atenuaciones exponenciales. La distancia final se elige mediante perfiles inspirados en las opciones históricas de distancia de renderizado.
+
+La versión 0.8.1 añade rutas específicas por dimensión: el Nether utiliza una niebla rojiza y una distancia inicial distinta; el End usa color, densidad, modo y distancias nativas cuando Iris los expone. Esta separación es una adaptación al motor moderno, no una afirmación de que Beta 1.7.3 tuviera la misma implementación de niebla del End que el juego actual.
+
+### Estrellas de Beta
+
+El proyecto estudia la rutina histórica de generación de estrellas de <code>RenderGlobal</code>. El generador de Python implementa el generador congruencial de 48 bits de <code>java.util.Random</code>, usa la semilla 10842 y reproduce el procedimiento de muestreo. De 1500 intentos se aceptan 780 estrellas para la configuración de referencia.
+
+En v0.8 el resultado se rasteriza como un mapa equirectangular. El shader calcula las coordenadas de muestreo a partir de la dirección del cielo, transforma la dirección al marco de estrellas de Beta y suma la contribución según el brillo estelar y la cobertura del mapa.
+
+La textura permite representar la disposición histórica mediante un shader, sin depender exclusivamente del pase nativo de estrellas. Sin embargo, la orientación aparente depende de cómo el motor moderno y el cargador gestionen la textura y las matrices; por ello existen comprobaciones específicas y modos de diagnóstico.
+
+### Nubes
+
+La estrategia actual **no reemplaza por completo el sistema de geometría de nubes de Minecraft moderno**. Iris sigue proporcionando la geometría, el color base y la máscara alfa de su etapa de nubes; el shader modifica principalmente color y sombreado.
+
+El comportamiento de color se inspira en <code>World.drawClouds</code>, con respuesta a hora y clima. Los factores históricos por orientación de las caras se expresan como brillo relativo: superior 1.0, inferior 0.7 y laterales 0.9/0.8. La alfa que llega del motor sigue siendo importante porque define qué fragmentos pertenecen a la nube.
+
+La altura merece una distinción especial. En Beta la altura nominal de nubes era aproximadamente 108,33, mientras que la geometría nativa moderna usa otra altura. v0.8 intentó acercarla a Beta; v0.8.1 adopta **Y=260,99** como remapeo fijo para el rango vertical moderno. No es una equivalencia física perfecta ni un sistema que ajuste automáticamente la altura al terreno; es una decisión de adaptación que debe juzgarse visualmente.
+
+---
+
+## 🗓️ Historia completa: v0.1–v0.9.0-pre1
+
+La numeración registra una evolución por capas. Las versiones menores correctivas son importantes: parte del trabajo no consiste en añadir efectos, sino en descubrir que una etapa moderna aplica una mezcla, un color o una geometría que no coincide con la suposición inicial.
+
+| Versión | Enfoque | Qué aportó |
+|---|---|---|
+| **v0.1** | Prototipo de iluminación | Primera curva de brillo histórica, interpolación del ángulo celeste, atenuación aproximada de luz de cielo por hora y lluvia, y combinación entre luz de cielo atenuada y luz de bloque. |
+| **v0.2** | Entidades y objetos | Lleva la iluminación reconstruida más allá del terreno mediante programas para entidades, mano, objetos sostenidos o caídos y block entities. Añade un programa específico para el brillo de encantamiento, que no debe oscurecerse como un material iluminado normal. |
+| **v0.3** | Cielo, clima y niebla | Incorpora atenuación por tormenta, iluminación ambiental distinta para dimensiones sin cielo, luz continua experimental, niebla histórica en aire y atenuaciones en agua y lava, color de cielo con transición al horizonte y brillo de estrellas calculado. |
+| **v0.4** | Fidelidad de niveles | Vuelve a imponer niveles discretos de luz de 0 a 15 en vez de dejar que la interpolación moderna suavice la entrada. Es una decisión a favor de la curva histórica, aun sabiendo que el resultado ya no es igual a una reconstrucción con iluminación moderna suavizada. |
+| **v0.5** | Regresión matemática | Añade pruebas para proteger la tabla de brillo, la periodicidad del ángulo celeste, la atenuación del cielo, el brillo de estrellas y otros invariantes. Las comprobaciones ayudan a distinguir una regresión matemática de un problema visual. |
+| **v0.6** | Comparación diferencial | Añade una batería que contrasta transcripciones de fórmulas Java con sus equivalentes matemáticos usados por el shader, a través de distintos tiempos y condiciones meteorológicas. Documenta las brechas que no se pueden igualar únicamente desde GLSL. |
+| **v0.7** | Integración de cielo y nubes | Añade configuración para las etapas de cielo, estrellas y nubes de Iris, conservando los sistemas de iluminación y niebla existentes. Comienza el trabajo de adaptar los efectos a los pases reales del motor moderno. |
+| **v0.7.1** | Corrección de nubes y estrellas | Añade programas de nubes compatibles con el pase del motor para preservar su geometría, color de vértice y alfa. Corrige la salida del brillo estelar para evitar multiplicaciones de alfa no deseadas. |
+| **v0.7.2** | Ciclo de color de nubes | Refina la respuesta de color histórica de las nubes ante día, lluvia y tormenta y restaura la salida RGBA de estrellas observada en la referencia. La geometría y la máscara de las nubes siguen procediendo del motor moderno. |
+| **v0.8** | Estrellas de Beta y paquete reproducible | Genera un mapa de estrellas a partir de la rutina histórica, lo integra en el shader del cielo, refina la cobertura de estrellas y el oscurecimiento nocturno de nubes, implementa el sombreado y color de nube inspirados en Beta e incorpora un empaquetador que resuelve los <code>#include</code>. |
+| **v0.8.1** | Niebla por dimensión y altura de nubes | Separa las rutas de niebla y luz ambiental de Overworld, Nether y End; el End puede usar parámetros de niebla nativos de Iris. Remapea la altura de las nubes a Y=260,99 para el rango moderno. Es una versión de adaptación, aún sujeta a validación visual. |
+| **v0.9.0-pre1** | Reconstrucción del campo climático | Porta la secuencia de Java Random, ruido Simplex de cuatro octavas, lookup de gradientes por semilla y HSB/RGB de 8 bits. Requiere generar recursos para la semilla de cada mundo; el build y la validación visual en Minecraft siguen pendientes. |
+
+### La evolución en cuatro etapas
+
+**Etapa I — reconstruir la iluminación (v0.1–v0.2).** El proyecto comienza con el terreno y luego extiende el mismo modelo matemático a objetos, entidades y elementos de la mano. Aparece una lección importante: en Iris no toda la escena atraviesa el mismo programa de shader.
+
+**Etapa II — recuperar la atmósfera (v0.3–v0.6).** Entra el cielo, la niebla, el clima y el control discreto de la luz. Las pruebas matemáticas convierten las fórmulas en reglas verificables, al tiempo que documentan lo que el shader no puede reproducir del motor completo.
+
+**Etapa III — adaptar las etapas visuales (v0.7–v0.8).** Estrellas y nubes presentan problemas distintos a la iluminación de materiales. Se necesita preservar la geometría que genera Minecraft moderno, respetar la mezcla alfa y resolver el mapa de estrellas en el marco correcto. También se construye el ZIP de forma reproducible.
+
+**Etapa IV — diferencias entre dimensiones y altura moderna (v0.8.1).** El foco se desplaza a las propiedades que varían por dimensión y a la altura de las nubes en un mundo con rango vertical moderno. La compatibilidad no se resuelve solo con fórmulas históricas: también requiere utilizar correctamente los parámetros de Iris.
+
+**Etapa V — campo climático dependiente de la semilla (v0.9.0-pre1).** Se reconstruye el ruido espacial que Beta evaluaba con las coordenadas X/Z del jugador. Al no disponer de la semilla original desde un uniforme estándar de Iris, el paquete requiere una generación externa de los datos para el mundo objetivo.
+
+### Documentos y artefactos de versión
+
+- [Paquete v0.8 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.zip)
+- [Paquete v0.8.1 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip)
+- [Release v0.8](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.8)
+- [Release v0.7.2](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2)
+- [Release v0.7.1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.1)
+- [Release v0.7](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7)
+- [Fuentes actualizadas y generador climático v0.9.0-pre1 en main](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting)
+- [Guía de generación por semilla](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md)
+
+---
+
+## 🏗️ Arquitectura del repositorio
+
+La carpeta de fuentes está organizada para permitir que el código común se mantenga separado durante el desarrollo y se incruste al crear el ZIP.
+
+| Ruta | Responsabilidad |
+|---|---|
+| <code>Beta173-Lighting/shaders/gbuffers_terrain.fsh</code> / <code>.vsh</code> | Iluminación de terreno y aplicación de niebla a la distancia de vista. |
+| <code>Beta173-Lighting/shaders/gbuffers_textured_lit.fsh</code> / <code>.vsh</code> | Programa compartido para geometría texturizada iluminada, como entidades, mano y objetos. |
+| <code>Beta173-Lighting/shaders/gbuffers_armor_glint.fsh</code> / <code>.vsh</code> | Tratamiento del brillo de encantamiento. |
+| <code>Beta173-Lighting/shaders/gbuffers_skybasic.fsh</code> / <code>.vsh</code> | Cielo, gradiente, dirección de estrellas, cobertura del mapa y etapas relacionadas. |
+| <code>Beta173-Lighting/shaders/gbuffers_clouds.fsh</code> / <code>.vsh</code> | Color, sombreado y adaptación de altura de las nubes; conserva la geometría de la etapa moderna. |
+| <code>Beta173-Lighting/shaders/lib/beta173.glsl</code> | Funciones compartidas para luz, hora del día, cielo, niebla, estrellas y clima. |
+| <code>Beta173-Lighting/shaders/lib/config.glsl</code> | Opciones del proyecto: perfiles de niebla, altura de nubes, modo de color y diagnósticos. |
+| <code>Beta173-Lighting/shaders/textures/starmap.png</code> | Mapa rasterizado de cobertura de estrellas. |
+| <code>Beta173-Lighting/tools/generate_starmap.py</code> | Genera el mapa equirectangular a partir de la geometría histórica de estrellas. |
+| <code>Beta173-Lighting/tools/build_pack.py</code> | Resuelve inclusiones, aplica opciones para compilaciones de diagnóstico y construye el ZIP. |
+| <code>Beta173-Lighting/tests/</code> | Pruebas de ecuaciones, regresiones, geometría de estrellas y empaquetado. |
+
+### ¿Por qué el ZIP no conserva las carpetas de biblioteca?
+
+Durante el desarrollo, archivos como <code>gbuffers_terrain.fsh</code> incluyen <code>/lib/beta173.glsl</code> y la biblioteca de configuración. Repetir todas esas funciones manualmente en varios programas sería difícil de mantener y podría provocar que la luz o la niebla divergieran entre etapas.
+
+Por eso el código fuente utiliza inclusiones. Al generar el ZIP, <code>build_pack.py</code> incorpora el contenido de esas bibliotecas dentro de cada programa GLSL y no deja las directivas <code>#include</code> sin resolver. Los archivos de <code>lib</code> se omiten como archivos independientes en el paquete final porque su contenido ya está integrado en los programas que lo necesitan.
+
+El ZIP resultante está pensado para instalarse como un shaderpack normal; no es necesario ejecutar Python al iniciar Minecraft.
+
+---
+
+## ⚙️ Configuración
+
+La configuración de las fuentes se encuentra en <code>Beta173-Lighting/shaders/lib/config.glsl</code>. Las opciones disponibles pueden variar entre una rama de desarrollo y el ZIP publicado; si modificas el proyecto, vuelve a generar el paquete después de cada cambio.
+
+### Perfiles históricos de niebla
+
+La opción <code>BETA_RENDER_DISTANCE</code> selecciona el perfil usado por la fórmula histórica:
 
 | Valor | Perfil | Distancia final |
 |---:|---|---:|
-| 0 | Far | 256 bloques |
-| 1 | Normal | 128 bloques |
-| 2 | Short | 64 bloques |
-| 3 | Tiny | 32 bloques |
+| <code>0</code> | Far | 256 bloques |
+| <code>1</code> | Normal | 128 bloques |
+| <code>2</code> | Short | 64 bloques |
+| <code>3</code> | Tiny | 32 bloques |
 
-El selector reproduce las fórmulas históricas; no controla la cantidad de chunks que carga Minecraft.
+Este selector cambia la distancia de la niebla calculada por el shader. **No controla la cantidad de chunks que Minecraft carga** y no sustituye las opciones de distancia de renderizado del juego.
 
-### Pruebas
+### Color de las nubes
 
-Desde la raíz del repositorio:
+En la configuración v0.8, <code>BETA_CLOUD_COLOR_MODE</code> ofrece tres comportamientos:
 
-```bash
+- <code>0</code>: color y sombreado reconstruidos al estilo de Beta; evita multiplicar de nuevo el color completo que entrega el motor.
+- <code>1</code>: utiliza el color del motor sin alterarlo.
+- <code>2</code>: mantiene el comportamiento experimental de v0.7.2, multiplicando el color reconstruido sobre el color del motor.
+
+Es una herramienta de comparación, no una garantía de que todos los modos luzcan idénticos en cada versión del juego.
+
+### Altura de las nubes
+
+La opción <code>BETA_CLOUD_HEIGHT_FIX</code> activa el desplazamiento de la geometría nativa hacia la altura configurada. En v0.8.1, la altura remapeada del paquete candidato es **Y=260,99**. Para dejar la geometría a la altura moderna por defecto, el ajuste de altura puede desactivarse en el código fuente antes de reconstruir el ZIP.
+
+Este ajuste es fijo. No calcula la altitud óptima en tiempo real ni sigue la forma de montañas y biomas.
+
+### Diagnóstico
+
+<code>BETA_DEBUG</code> ofrece modos de depuración que ayudan a identificar problemas en las etapas de cielo, estrellas, datos del mundo y nubes. Antes de crear una versión normal, vuelve a <code>BETA_DEBUG 0</code>; los otros valores son herramientas de análisis y pueden cambiar intencionadamente los colores de la escena.
+
+Si una opción se cambia en las fuentes, ejecuta de nuevo la batería de pruebas y reconstruye el paquete. Editar un shader dentro de un ZIP ya generado no modifica automáticamente las fuentes del repositorio.
+
+---
+
+## 📦 Instalación
+
+1. Descarga [**Beta173-Lighting-0.8.1.zip**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
+2. Copia el archivo ZIP, **sin descomprimirlo**, en la carpeta <code>shaderpacks</code> de la instancia de Minecraft en la que tengas Iris.
+3. Inicia el juego y abre **Opciones → Ajustes de vídeo → Shader Packs** (el nombre exacto puede variar según la versión o el idioma).
+4. Selecciona <code>Beta173-Lighting-0.8.1</code>.
+5. Comprueba el Overworld durante el día y la noche, prueba lluvia o tormenta, y revisa la niebla del Nether y del End.
+
+Si el shaderpack no aparece, comprueba que el ZIP contiene una carpeta <code>shaders/</code> en su raíz y que no lo has dejado dentro de una segunda carpeta contenedora. El archivo debe mantenerse comprimido en <code>shaderpacks</code>.
+
+**Importante:** el ZIP v0.8.1 es un paquete experimental. Que se instale correctamente no significa que la apariencia de todos los sistemas haya quedado verificada visualmente.
+
+---
+
+## 🧪 Pruebas y validación
+
+Las pruebas tienen objetivos distintos y deben interpretarse por separado.
+
+### Pruebas matemáticas y de regresión
+
+Las pruebas Python reflejan ciertas ecuaciones Java en funciones Python y las comparan con las fórmulas equivalentes del shader. Entre las propiedades comprobadas están:
+
+- Los 16 niveles de la curva de brillo y sus límites.
+- La periodicidad del ángulo celeste.
+- El rango y la monotonía esperada de la atenuación de luz del cielo.
+- Varias combinaciones de hora, lluvia y tormenta.
+- La fórmula y los invariantes de brillo de estrellas.
+- La presencia de constantes o ramas de shader necesarias para una corrección.
+- El tamaño, la cobertura y la reproducibilidad del mapa de estrellas.
+- La integridad del ZIP y la resolución de las inclusiones.
+
+Para ejecutar la suite desde la raíz del repositorio:
+
+~~~bash
 python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
-```
+~~~
 
-Las pruebas automatizadas comprueban invariantes y código fuente, no simulan todo el motor de Minecraft.
+### Validación del empaquetado
 
-### Limitaciones conocidas
+El empaquetador comprueba que las inclusiones estén resueltas y que el ZIP contenga las rutas de shaders que necesita. También se puede comprobar la integridad del archivo con:
 
-- La temperatura del bioma sigue siendo una aproximación neutral.
-- La altura de nube Y=260.99 es fija; puede no ser ideal sobre todos los picos y biomas.
-- El sombreado de las caras de las nubes todavía requiere confirmación visual, especialmente al observarlas desde arriba.
-- La propagación de luz y el renderizado moderno no son idénticos al motor original.
-- La fidelidad final de estrellas, nubes y niebla depende de la combinación de Minecraft, Iris y Sodium.
+~~~bash
+unzip -t Beta173-Lighting-0.8.1.zip
+~~~
 
-### Historial
+### Validación GLSL
 
-- **v0.8.1 — Dimension Fog & Cloud Height:** niebla por dimensión y altura de nubes adaptada al Overworld moderno.
-- **[v0.8 — Beta Stars & Night Clouds](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.8):** campo de estrellas Beta y ciclo nocturno de nubes.
-- **[v0.7.2 — Beta Cloud Cycle & Stars](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2):** ciclo de color de nubes y salida RGBA de estrellas.
-- **[v0.7 — Sky, Stars & Clouds](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7):** configuración inicial de Iris para estrellas y nubes.
-- [v0.6 — Historical Fog Profiles](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.6.zip): perfiles de niebla históricos.
+Cuando está disponible <code>glslangValidator</code>, se pueden validar los programas emparejando cada vertex shader con su fragment shader correspondiente. La comprobación estática permite detectar errores de sintaxis o de enlace entre etapas, pero no reproduce la compilación ni todos los uniformes internos del entorno real de Iris.
 
-Código de referencia: https://github.com/jacobo-mc/mc_b1.7.3_release
+En el candidato v0.8.1 usado durante el desarrollo, **27 pruebas automatizadas pasaron**, el ZIP superó la comprobación de integridad y se validaron cinco pares de programas GLSL. Son resultados estáticos del candidato; no equivalen a una prueba visual automatizada dentro de Minecraft.
 
+### La verificación visual sigue siendo necesaria
 
-## v0.9 experimental — reconstrucción climática de Beta
+Una ecuación puede coincidir con la referencia y aun así producir una imagen distinta debido a la geometría moderna, a la precisión numérica, a la interpolación, al blending, a las matrices de cámara o a los datos que Iris exponga en cada etapa.
 
-La rama de investigación `feature/v0.9-exact-climate-noise` reconstruye la ruta de `World.getSkyColor` de Beta 1.7.3 en vez de sustituirla por el uniforme moderno `temperature`.
+Las pruebas de estrellas, nubes y niebla necesitan una última evaluación en el juego real: distintas horas, clima, biomas, alturas de cámara y dimensiones. El proyecto no afirma equivalencia visual completa únicamente porque las pruebas pasen.
 
-- `WorldChunkManager` crea cuatro octavas de `NoiseGeneratorOctaves2` desde `new Random(worldSeed * 9871L)`.
-- `NoiseGenerator2` aporta los offsets, las permutaciones de `java.util.Random`, el ruido Simplex 2D y su ponderación por octava.
-- `BiomeGenBase.getSkyColorByTemp` conserva la conversión histórica HSB; lluvia, tormenta y ciclo diurno siguen usando las funciones ya portadas.
-- `tools/generate_climate_seed.py --seed <semilla>` genera el lookup de gradientes y los offsets específicos de ese mundo. El generador solo usa Python estándar.
+---
 
-**Límite esencial:** Iris no expone un uniforme estándar para la semilla del mundo ni garantiza coordenadas X/Z absolutas persistentes en `cameraPosition`. Por ello el shader no puede reconstruir automáticamente el campo exacto en cualquier mundo solo con instalar el ZIP. Debes generar los recursos con el resultado de `/seed`. El shader usa `eyePosition` junto con `cameraPositionInt` y `cameraPositionFract` para reconstruir las coordenadas del jugador y reducir los errores por la cámara desplazada; el wrapping/reinicio todavía puede requerir corregir el origen. GLSL usa `float` mientras Beta calculaba con `double`, así que la fórmula y el campo se portan pero no prometemos igualdad bit a bit. La rama se mantiene experimental hasta verificar el resultado visual en Minecraft.
+## ⚠️ Limitaciones conocidas
+
+**Beta173 Lighting reproduce componentes concretos; no reconstruye el motor completo.** Entre las limitaciones actuales se encuentran:
+
+- **Propagación de luz:** un shader no reemplaza los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. La reconstrucción actúa sobre los datos que ya expone el motor moderno.
+- **Lightmap moderno:** las coordenadas del lightmap actual solo pueden convertirse de forma aproximada en los niveles históricos de Beta. La correspondencia no implica que las dos simulaciones de iluminación sean idénticas.
+- **Interpolación temporal:** determinadas funciones históricas recibían fracciones de tick o datos del motor que no siempre están disponibles de la misma forma en el shader.
+- **Campo climático (v0.9.0-pre1):** el ZIP debe construirse para la semilla del mundo mediante `tools/configure_climate_pack.py`. La estructura reproduce las cuatro octavas y la cuantización HSB histórica, pero el shader usa `float`, por lo que no se garantiza igualdad bit a bit. La apariencia aún requiere validación visual en Minecraft.
+- **Sol y luna:** el proyecto se centra en el cielo, las estrellas y la niebla; no reconstruye de forma completa la geometría, el movimiento o las fases de los cuerpos celestes históricos.
+- **Geometría de nubes:** las nubes utilizan la geometría del motor moderno; todavía no se ha reproducido íntegramente el sistema de celdas, desplazamiento y múltiples pasadas de Beta.
+- **Altura de nube:** Y=260,99 es una adaptación fija al rango vertical moderno; puede no ser ideal sobre todos los picos.
+- **Niebla por dimensión:** la ruta del End depende de los parámetros nativos que proporcione la versión de Iris utilizada.
+- **Compatibilidad de renderizado:** los pases y uniformes disponibles pueden variar entre versiones de Minecraft, Iris y Sodium.
+- **Fidelidad visual:** se verifica manualmente y no se puede deducir solo de las pruebas matemáticas o de la compilación GLSL.
+
+Estas limitaciones son parte de la documentación del proyecto, no una lista de problemas que deban darse necesariamente en todas las instalaciones. Su efecto debe comprobarse con la combinación de software concreta.
+
+---
+
+## 🚧 Objetivos futuros
+
+Las siguientes líneas representan trabajo potencial, no funciones que deban considerarse ya terminadas:
+
+- Corregir y verificar el sombreado de las nubes al observarlas desde arriba y desde abajo, manteniendo una clasificación estable de cada cara.
+- Revisar las diferencias entre la geometría de nubes de Beta y la geometría nativa moderna, sin romper la compatibilidad con Iris.
+- Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
+- Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
+- Validar el campo climático v0.9 con semillas reales en distintas coordenadas, horas y condiciones meteorológicas, comparando el color con una referencia Java.
+- Probar sistemáticamente amanecer, mediodía, atardecer, noche, lluvia, tormenta y niebla en cada dimensión.
+- Documentar por versión las combinaciones de Minecraft, Iris y Sodium en las que se haya probado visualmente el shaderpack.
+- Mantener los perfiles de diagnóstico y el empaquetado reproducible para que futuras correcciones no deshagan las anteriores.
+
+El orden puede cambiar según los resultados de las pruebas. La prioridad es preferir cambios verificables y reversibles frente a introducir efectos que parezcan correctos en una sola captura, pero fallen en otras condiciones.
+
+---
+
+## 🤝 Créditos y referencias
+
+- **Minecraft Java Edition Beta 1.7.3:** referencia histórica y visual del comportamiento que se intenta reproducir.
+- **[jacobo-mc/mc_b1.7.3_release](https://github.com/jacobo-mc/mc_b1.7.3_release):** referencia de código para estudiar las funciones Java y contrastar las fórmulas históricas. No se ejecuta como motor en el shaderpack.
+- **[Iris Shaders](https://github.com/IrisShaders/Iris):** cargador de shaderpacks y entorno de integración con el pipeline moderno.
+- **[Sodium](https://github.com/CaffeineMC/sodium):** componente del entorno moderno de renderizado usado en las pruebas de compatibilidad.
+- **GLSL:** lenguaje utilizado para implementar los programas de shader.
+- **Python:** herramientas de pruebas, generación de mapa de estrellas y construcción del paquete.
+
+Las referencias se mencionan para dejar claro de dónde proceden las ideas históricas y cuál es el entorno donde se implementan. Los nombres y las marcas pertenecen a sus respectivos autores y proyectos.
+
+## 📜 Licencia y uso de terceros
+
+Consulta el archivo de licencia que acompañe a cada componente y a cualquier contenido de terceros antes de redistribuirlo o modificarlo. La referencia histórica, la documentación técnica, el código del shaderpack y las texturas generadas pueden tener condiciones distintas. Este README no sustituye las licencias correspondientes.
+
+---
+
+<p align="center">
+  <strong>Beta173 Lighting</strong><br>
+  Estudiar el pasado del renderizado, traducir sus reglas y comprobar hasta dónde pueden llegar dentro de un motor moderno.
+</p>

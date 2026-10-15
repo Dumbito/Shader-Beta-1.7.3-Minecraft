@@ -88,6 +88,7 @@ float beta173LightLevel(vec2 lm) {
 }
 
 // Port de java.awt.Color.getHSBColor / HSBtoRGB: sectores HSV y cuantizacion RGB de 8 bits.
+// Java convierte cada canal mediante (int)(canal * 255), es decir, truncamiento y no redondeo.
 vec3 beta173Hsb(float h, float s, float b) {
     h = fract(h) * 6.0;
     int sector = int(h);
@@ -102,7 +103,7 @@ vec3 beta173Hsb(float h, float s, float b) {
     else if (sector == 3) rgb = vec3(p, q, b);
     else if (sector == 4) rgb = vec3(t, p, b);
     else rgb = vec3(b, p, q);
-    return floor(rgb * 255.0 + 0.5) / 255.0;
+    return floor(clamp(rgb, 0.0, 1.0) * 255.0) / 255.0;
 }
 
 // Temperatura climática de Beta, basada en la semilla y las coordenadas X/Z del jugador.
@@ -117,7 +118,7 @@ float beta173SkyClimateTemperature() {
     // de la cámara y la diferencia camera->eye. Reduce errores en tercera persona y a distancias largas.
     vec2 cameraWorldXZ = vec2(cameraPositionInt.xz) + cameraPositionFract.xz;
     vec2 playerWorldXZ = cameraWorldXZ + (eyePosition.xz - cameraPosition.xz);
-    vec2 playerXZ = floor(playerWorldXZ + vec2(BETA_CLIMATE_ORIGIN_X, BETA_CLIMATE_ORIGIN_Z));
+    vec2 playerXZ = floor(playerWorldXZ);
     return beta173ClimateTemperature(playerXZ);
 #endif
 #else

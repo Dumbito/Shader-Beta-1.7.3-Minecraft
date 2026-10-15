@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Generate an exact Java-Random permutation texture for Beta 1.7.3 climate noise.
+"""Genera los datos seed-specific del ruido climatico de Minecraft Beta 1.7.3.
 
-Run from the repository root:
-    python3 Beta173-Lighting/tools/generate_climate_seed.py --seed -123456789
+Uso desde la raiz del repositorio:
+    python3 Beta173-Lighting/tools/generate_climate_seed.py --seed 123456789
 
-The seed is the value returned by the world's /seed command. The generator writes
-shaders/textures/beta173_climate_gradient.png and shaders/lib/climate_seed.glsl.
-This is world-specific: do not reuse these generated files for worlds with another seed.
+Para jugadores, se recomienda tools/configure_climate_pack.py: genera el ZIP completo en
+una carpeta temporal, sin editar los archivos del repositorio ni reemplazar otros packs.
 """
 from __future__ import annotations
 
@@ -23,7 +22,7 @@ OCTAVES = 4
 
 
 class JavaRandom:
-    """Minimal bit-compatible java.util.Random (48-bit LCG)."""
+    """Subset of java.util.Random with its exact 48-bit LCG behavior."""
     def __init__(self, seed: int):
         self.state = (seed ^ MULTIPLIER) & MASK
 
@@ -42,9 +41,8 @@ class JavaRandom:
         while True:
             bits = self.next_bits(31)
             value = bits % bound
-            # Java evalúa el sumador como int de 32 bits con signo.
-            expr = (bits - value + (bound - 1)) & 0xFFFFFFFF
-            if expr < 0x80000000:
+            # java.util.Random comprueba overflow signed-int en esta expresion.
+            if bits - value + (bound - 1) < (1 << 31):
                 return value
 
 
@@ -56,146 +54,156 @@ class Octave:
 
 
 def create_octaves(world_seed: int) -> list[Octave]:
-    """Port of WorldChunkManager's NoiseGeneratorOctaves2(Random(seed*9871), 4)."""
+    """Port de WorldChunkManager -> NoiseGeneratorOctaves2(seed * 9871, 4)."""
     rng = JavaRandom(world_seed * 9871)
     octaves: list[Octave] = []
     for _ in range(OCTAVES):
-        # NoiseGenerator2 consumes three nextDouble calls before shuffling.
-        off_x = rng.next_double() * 256.0
-        off_z = rng.next_double() * 256.0
+        # NoiseGenerator2 consume tres nextDouble antes de mezclar la permutacion.
+        offset_x = rng.next_double() * 256.0
+        offset_z = rng.next_double() * 256.0
         _unused_y_offset = rng.next_double() * 256.0
         permutation = list(range(256))
         for i in range(256):
             j = rng.next_int(256 - i) + i
             permutation[i], permutation[j] = permutation[j], permutation[i]
-        octaves.append(Octave(off_x, off_z, tuple(permutation)))
+        octaves.append(Octave(offset_x, offset_z, tuple(permutation)))
     return octaves
 
 
 def _png_chunk(kind: bytes, data: bytes) -> bytes:
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+    return (
+        struct.pack(">I", len(data))
+        + kind
+        + data
+        + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+    )
 
 
 def write_texture(octaves: list[Octave], path: Path) -> None:
-    """Write precomputed gradient indices to a 256x1024 lossless RGBA8 texture.
+    """Escribe una tabla lossless RGBA8 (256 x 1024) con los indices de gradiente.
 
-    Each 256-row band corresponds to one octave. Storing p[x + p[z]] % 12 in the
-    texture reduces the shader's permutation lookup from two texture reads to one.
+    Una banda de 256 filas por octava. Cada texel precalcula p[x + p[z]] % 12.
+    El shader hace texelFetch para no interpolar datos discretos.
     """
     width, height = 256, OCTAVES * 256
     raw = bytearray()
-    # PNG rows are top-to-bottom while OpenGL texelFetch uses bottom-to-top coordinates.
+    # OpenGL accede por la fila 0 inferior; el PNG convencional se almacena desde arriba.
     for png_y in range(height):
         gl_y = height - 1 - png_y
         octave_index, z = divmod(gl_y, 256)
         permutation = octaves[octave_index].permutation
-        raw.append(0)  # PNG filter: None
+        raw.append(0)  # PNG filter None
         for x in range(width):
-            gradient_index = permutation[((x + permutation[z]) & 255)] % 12
+            gradient_index = permutation[(x + permutation[z]) & 255] % 12
             raw.extend((gradient_index, 0, 0, 255))
-    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)  # RGBA8
-    png = b"\x89PNG\r\n\x1a\n" + _png_chunk(b"IHDR", ihdr)
-    png += _png_chunk(b"IDAT", zlib.compress(bytes(raw), level=9)) + _png_chunk(b"IEND", b"")
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    png = b"\x89PNG\r\n\x1a\n"
+    png += _png_chunk(b"IHDR", ihdr)
+    png += _png_chunk(b"IDAT", zlib.compress(bytes(raw), level=9))
+    png += _png_chunk(b"IEND", b"")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(png)
 
 
-def generate_seed_glsl(world_seed: int, octaves: list[Octave], origin_x: int = 0, origin_z: int = 0) -> str:
+def generate_seed_glsl(world_seed: int, octaves: list[Octave]) -> str:
     lines = [
         "// GENERADO por tools/generate_climate_seed.py; no editar a mano.",
-        f"// World seed (comando /seed): {world_seed}",
-        "// Offset de coordenadas opcional para compensar el wrapping de cameraPosition de Iris.",
+        f"// World seed tomada de /seed o de Data.WorldGenSettings.seed: {world_seed}",
         "#define BETA_CLIMATE_SEED_CONFIGURED 1",
-        f"#define BETA_CLIMATE_ORIGIN_X {origin_x}.0",
-        f"#define BETA_CLIMATE_ORIGIN_Z {origin_z}.0",
     ]
     for i, octave in enumerate(octaves):
         lines.append(
-            f"const vec2 BETA_CLIMATE_OFFSET_{i} = vec2({octave.offset_x:.12f}, {octave.offset_z:.12f});"
+            f"const vec2 BETA_CLIMATE_OFFSET_{i} = "
+            f"vec2({octave.offset_x:.12f}, {octave.offset_z:.12f});"
         )
     lines.append("")
     return "\n".join(lines)
 
 
-def generate(shader_root: Path, world_seed: int, origin_x: int = 0, origin_z: int = 0) -> tuple[Path, Path]:
+def generate(shader_root: Path, world_seed: int) -> tuple[Path, Path]:
     octaves = create_octaves(world_seed)
     texture_path = shader_root / "textures" / "beta173_climate_gradient.png"
     glsl_path = shader_root / "lib" / "climate_seed.glsl"
     write_texture(octaves, texture_path)
     glsl_path.parent.mkdir(parents=True, exist_ok=True)
-    glsl_path.write_text(generate_seed_glsl(world_seed, octaves, origin_x, origin_z), encoding="utf-8")
+    glsl_path.write_text(generate_seed_glsl(world_seed, octaves), encoding="utf-8")
     return texture_path, glsl_path
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--seed", required=True, type=int, help="semilla exacta que devuelve /seed")
-    parser.add_argument("--origin-x", type=int, default=0, help="corrección de X si cameraPosition se ha reiniciado")
-    parser.add_argument("--origin-z", type=int, default=0, help="corrección de Z si cameraPosition se ha reiniciado")
-    parser.add_argument("--shader-root", type=Path, default=Path(__file__).resolve().parents[1] / "shaders")
-    args = parser.parse_args()
-    texture, seed_source = generate(args.shader_root, args.seed, args.origin_x, args.origin_z)
-    print(f"Semilla de mundo: {args.seed}")
-    print(f"Textura: {texture}")
-    print(f"Offsets: {seed_source}")
-    print("Ahora construye un ZIP con tools/build_pack.py y úsalo solo en ese mundo/semilla.")
-    print("Nota: cameraPosition de Iris puede hacer wrapping; usa --origin-x/--origin-z si corresponde.")
-    return 0
-
-
-# CPU reference path used by tests to validate the shader's noise formula.
+# CPU reference implementation ported from NoiseGenerator2/NoiseGeneratorOctaves2.
+# Kept here so regression tests can detect unintended changes to the mathematical model.
 _GRADIENTS_2D = (
     (1.0, 1.0), (-1.0, 1.0), (1.0, -1.0), (-1.0, -1.0),
     (1.0, 0.0), (-1.0, 0.0), (1.0, 0.0), (-1.0, 0.0),
     (0.0, 1.0), (0.0, -1.0), (0.0, 1.0), (0.0, -1.0),
 )
-_F2 = 0.5 * (3.0 ** 0.5 - 1.0)
+_F2 = (3.0 ** 0.5 - 1.0) / 2.0
 _G2 = (3.0 - 3.0 ** 0.5) / 6.0
 
 
 def _java_wrap(value: float) -> int:
-    truncated = int(value)  # Python int, like Java's cast, truncates toward zero.
+    truncated = int(value)  # Java double-to-int conversion truncates toward zero.
     return truncated if value > 0.0 else truncated - 1
 
 
-def _corner(point_x: float, point_z: float, gradient_index: int) -> float:
-    attenuation = 0.5 - point_x * point_x - point_z * point_z
+def _corner(x: float, z: float, gradient_index: int) -> float:
+    attenuation = 0.5 - x * x - z * z
     if attenuation < 0.0:
         return 0.0
     attenuation *= attenuation
     gx, gz = _GRADIENTS_2D[gradient_index]
-    return attenuation * attenuation * (gx * point_x + gz * point_z)
+    return attenuation * attenuation * (gx * x + gz * z)
 
 
-def simplex_2d(point_x: float, point_z: float, octave: Octave) -> float:
-    """Float64 reference of the exact NoiseGenerator2 simplex formula."""
-    skew = (point_x + point_z) * _F2
-    i = _java_wrap(point_x + skew)
-    j = _java_wrap(point_z + skew)
+def simplex_2d(x: float, z: float, permutation: tuple[int, ...]) -> float:
+    skew = (x + z) * _F2
+    i = _java_wrap(x + skew)
+    j = _java_wrap(z + skew)
     unskew = (i + j) * _G2
-    x0 = point_x - (i - unskew)
-    z0 = point_z - (j - unskew)
+    x0 = x - (i - unskew)
+    z0 = z - (j - unskew)
     i1, j1 = (1, 0) if x0 > z0 else (0, 1)
     x1, z1 = x0 - i1 + _G2, z0 - j1 + _G2
     x2, z2 = x0 - 1.0 + 2.0 * _G2, z0 - 1.0 + 2.0 * _G2
-    p = octave.permutation
+    p = permutation
     g0 = p[((i & 255) + p[j & 255]) & 255] % 12
     g1 = p[((i & 255) + i1 + p[((j & 255) + j1) & 255]) & 255] % 12
     g2 = p[((i & 255) + 1 + p[((j & 255) + 1) & 255]) & 255] % 12
-    return 70.0 * (_corner(x0, z0, g0) + _corner(x1, z1, g1) + _corner(x2, z2, g2))
+    return 70.0 * (
+        _corner(x0, z0, g0) + _corner(x1, z1, g1) + _corner(x2, z2, g2)
+    )
 
 
 def climate_temperature(world_seed: int, block_x: int, block_z: int) -> float:
-    """Reproduce WorldChunkManager.getTemperature(x,z) on Beta 1.7.3."""
+    """Reproduce WorldChunkManager.getTemperature(x,z) using double precision."""
     value = 0.0
     frequency = amplitude = 1.0
     for octave in create_octaves(world_seed):
-        px = (block_x * (0.02500000037252903 / 1.5) * frequency) + octave.offset_x
-        pz = (block_z * (0.02500000037252903 / 1.5) * frequency) + octave.offset_z
-        value += simplex_2d(px, pz, octave) * (0.55 / amplitude)
+        px = block_x * (0.02500000037252903 / 1.5) * frequency + octave.offset_x
+        pz = block_z * (0.02500000037252903 / 1.5) * frequency + octave.offset_z
+        value += simplex_2d(px, pz, octave.permutation) * (0.55 / amplitude)
         frequency *= 0.5
         amplitude *= 0.5
     return value
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--seed", required=True, type=int, help="semilla exacta de /seed")
+    parser.add_argument(
+        "--shader-root",
+        type=Path,
+        default=Path(__file__).resolve().parents[1] / "shaders",
+    )
+    args = parser.parse_args()
+    if not -(1 << 63) <= args.seed < (1 << 63):
+        parser.error("--seed debe caber en un long firmado de Java (64 bits)")
+    texture, source = generate(args.shader_root, args.seed)
+    print(f"Semilla: {args.seed}")
+    print(f"Textura climatica: {texture}")
+    print(f"Offsets por octava: {source}")
+    return 0
 
 
 if __name__ == "__main__":
