@@ -1,29 +1,31 @@
 package dev.beta173.climatebridge.mixin;
 
+import dev.beta173.climatebridge.ClimateSeedStore;
 import dev.beta173.climatebridge.LegacyClimateNoise;
 import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.gl.uniform.UniformUpdateFrequency;
 import net.irisshaders.iris.uniforms.FrameUpdateNotifier;
-import net.irisshaders.iris.uniforms.IrisExclusiveUniforms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Adds optional Iris uniforms. With a local integrated world, the raw world seed is
- * available and we can reproduce Beta 1.7.3's climate field. In remote multiplayer,
- * vanilla sends only an obfuscated seed, so this bridge intentionally reports unavailable.
+ * Adds optional Iris uniforms. Exact climate data is available in singleplayer or
+ * when a remote server has deliberately enabled seed sharing in its server config.
+ * Without a raw seed, the shader automatically falls back to Iris's biome temperature.
  */
-@Mixin(IrisExclusiveUniforms.class)
+@Pseudo
+@Mixin(targets = "net.irisshaders.iris.uniforms.IrisExclusiveUniforms")
 public abstract class ClimateUniformMixin {
     private static volatile Sample cached;
 
-    @Inject(at = @At("HEAD"), method = "addIrisExclusiveUniforms")
+    @Inject(at = @At("HEAD"), method = "addIrisExclusiveUniforms", require = 0)
     private static void beta173$registerClimateUniforms(
         UniformHolder uniforms,
         FrameUpdateNotifier updateNotifier,
@@ -61,12 +63,17 @@ public abstract class ClimateUniformMixin {
     private static Sample currentSample() {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
-        var server = minecraft.getSingleplayerServer();
-        if (player == null || server == null || minecraft.level == null) return null;
+        if (player == null || minecraft.level == null) return null;
 
-        var overworld = server.overworld();
-        if (overworld == null) return null;
-        long seed = overworld.getSeed();
+        Long seed = null;
+        var server = minecraft.getSingleplayerServer();
+        if (server != null && server.overworld() != null) {
+            seed = server.overworld().getSeed();
+        } else {
+            seed = ClimateSeedStore.remoteSeed();
+        }
+        if (seed == null) return null;
+
         BlockPos blockPosition = player.blockPosition();
         int x = blockPosition.getX();
         int z = blockPosition.getZ();

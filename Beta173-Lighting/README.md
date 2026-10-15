@@ -8,9 +8,9 @@ Esta rama incorpora una ruta universal sin editar GLSL, reemplazar texturas ni i
 
 1. **Shaderpack universal, sin mods extra:** usa el uniforme `temperature` de Iris, actualizado automáticamente para el bioma actual. Funciona en mundos locales y servidores porque no requiere conocer la semilla. Es un respaldo dependiente del bioma moderno, no el ruido espacial exacto de Beta.
 2. **Beta173 Climate Bridge (opcional, Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene la semilla real del servidor integrado, reconstruye en Java el Simplex histórico de cuatro octavas y pasa a Iris el color HSB/RGB exacto de 8 bits. Así no hace falta configurar una semilla por mundo.
-3. **Mundos multijugador remotos:** el cliente vanilla recibe una semilla ofuscada, no la semilla original. Sin cooperación del servidor es imposible reconstruir el ruido histórico exacto solo desde un ZIP cliente. El shaderpack mantiene por eso el fallback automático por bioma en lugar de producir un color neutral.
+3. **Mundos multijugador remotos:** el cliente vanilla recibe una semilla ofuscada, no la semilla original. Si el servidor instala el mismo bridge y habilita explícitamente `shareWorldSeed=true` en `config/beta173-climate-bridge.properties`, puede enviar la semilla cruda al cliente. La opción está desactivada por defecto. Sin cooperación del servidor, el shaderpack conserva el fallback automático por bioma.
 
-El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. Ambos artefactos son experimentales hasta que el workflow compile el mod, enlace los shaders y podamos comprobarlos visualmente en Minecraft.
+El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. Ambos artefactos son experimentales. El shaderpack y sus enlaces GLSL ya pasan CI; la extensión multijugador del bridge debe completar una nueva compilación y aún falta comprobar el resultado visualmente en Minecraft.
 
 La ruta heredada de ZIP específico por semilla sigue disponible para mundos donde se conozca la semilla original; no es necesaria para instalar ni usar el ZIP universal.
 

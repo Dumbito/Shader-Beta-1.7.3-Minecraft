@@ -1,25 +1,25 @@
 # Beta173 Climate Bridge — experimental
 
-Optional Fabric client mod for Minecraft 26.3 + Iris 1.11.6+. It adds three Iris uniforms that allow Beta173 Lighting to use the original Beta 1.7.3 climate-temperature algorithm automatically in a local single-player world:
+Optional Fabric mod for Minecraft 26.3 + Fabric API. On clients with Iris 1.11.6+, it adds three uniforms used by Beta173 Lighting:
 
 - `beta173LegacyClimateAvailable`
 - `beta173LegacyClimateTemperature`
 - `beta173LegacySkyRgb`
 
-The bridge obtains the raw seed from the integrated server, calculates the four-octave Simplex field at the player's integer X/Z coordinates, and applies the original Java HSB-to-8-bit-RGB conversion. The computation is cached until the seed or block coordinates change.
+## Modes
 
-## Important multiplayer limitation
-
-Vanilla Minecraft 26.3 obfuscates the seed sent to a remote client. A client-only mod cannot invert that hash to recover the raw world seed. Therefore, without a server-side plugin/mod that cooperates, the bridge deliberately reports the raw seed unavailable in multiplayer. The universal shaderpack then falls back to Iris's current biome `temperature` uniform; it still works automatically, but this fallback is not the exact historical noise field.
+- **Singleplayer / integrated server:** the client can access its own server's raw world seed and compute Beta 1.7.3's four-octave Simplex climate field automatically.
+- **Multiplayer with this mod on both client and server:** the server can optionally send its raw world seed. The server operator must explicitly set `shareWorldSeed=true` in `config/beta173-climate-bridge.properties`. It defaults to `false`, because disclosing a seed can reveal world-generation information.
+- **Multiplayer without server cooperation:** vanilla sends an obfuscated seed to the client; exact historical noise cannot be reconstructed from that value. The universal shaderpack falls back automatically to Iris's current biome `temperature`.
 
 ## Build
 
-From this directory, with Java 25 and Gradle 9.5:
+With Java 25 and Gradle 9.5:
 
 ```bash
-gradle build
+gradle -p Beta173-Climate-Bridge build
 ```
 
-Copy `build/libs/beta173-climate-bridge-0.1.0.jar` into the Minecraft instance's `mods` directory. The shaderpack remains a regular ZIP in `shaderpacks`.
+Install the resulting `beta173-climate-bridge-0.1.0.jar` in the `mods` folder. For exact remote multiplayer climate, the server must also install the same jar and enable seed sharing in its config. The shaderpack itself remains an ordinary ZIP in `shaderpacks`.
 
-This is source/CI candidate only until the build and in-game checks pass. No precompiled JAR is claimed stable.
+The source/build candidate is experimental until the automated build and in-game tests pass.
