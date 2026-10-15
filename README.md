@@ -317,11 +317,13 @@ La textura permite representar la disposición histórica mediante un shader, si
 
 ### Nubes
 
-La estrategia actual **no reemplaza por completo el sistema de geometría de nubes de Minecraft moderno**. Iris sigue proporcionando la geometría, el color base y la máscara alfa de su etapa de nubes; el shader modifica principalmente color y sombreado.
+Desde **v0.9.1**, el shaderpack ya no se limita a retocar la malla de nubes moderna: incorpora un geometry shader y la máscara de nubes de Beta para reconstruir su forma visible. La malla implementa la cuadrícula de 6×6 celdas de 96×96 bloques, paredes segmentadas cada 12 bloques, 4 bloques de grosor, desplazamiento de 0,03 bloques por tick y sombreado histórico por cara (superior 1.0, inferior 0.7 y laterales 0.9/0.8).
 
-El comportamiento de color se inspira en <code>World.drawClouds</code>, con respuesta a hora y clima. Los factores históricos por orientación de las caras se expresan como brillo relativo: superior 1.0, inferior 0.7 y laterales 0.9/0.8. La alfa que llega del motor sigue siendo importante porque define qué fragmentos pertenecen a la nube.
+La opción **BETA_CUSTOM_CLOUD_GEOMETRY** está disponible en *Shader Pack Settings*. Puede desactivarse para volver a la geometría moderna si la combinación local de Minecraft, Iris y Sodium presenta artefactos.
 
-La altura merece una distinción especial. En Beta la altura nominal de nubes era aproximadamente 108,33, mientras que la geometría nativa moderna usa otra altura. v0.8 intentó acercarla a Beta; v0.8.1 adopta **Y=260,99** como remapeo fijo para el rango vertical moderno. No es una equivalencia física perfecta ni un sistema que ajuste automáticamente la altura al terreno; es una decisión de adaptación que debe juzgarse visualmente.
+Esto reconstruye la geometría visible, no reproduce literalmente las llamadas OpenGL del renderer antiguo ni todas sus etapas de dibujo. En particular, la validación dentro del juego debe comprobar la cobertura, el clipping en los bordes, la transparencia, el test de profundidad y el movimiento desde distintos ángulos; la compilación GLSL por sí sola no demuestra que estos detalles se vean idénticos.
+
+La altura también requiere distinguir entre fidelidad histórica y adaptación moderna. Beta situaba las nubes aproximadamente a Y=108,33 en su mundo de 128 bloques de alto; v0.8.1 adopta **Y=260,99** como remapeo fijo al rango moderno [-64, 320]. No es una altura dinámica con respecto al terreno y puede no ser ideal sobre todos los picos.
 
 ---
 
@@ -495,20 +497,20 @@ El autor confirmó que la prueba visual de la v0.9.0 dentro de Minecraft fue com
 
 ## ⚠️ Limitaciones conocidas
 
-**Beta173 Lighting reproduce componentes concretos; no reconstruye el motor completo.** Entre las limitaciones actuales se encuentran:
+**Beta173 Lighting reconstruye sistemas concretos del renderizado de Beta 1.7.3; no reemplaza el motor de Minecraft.** Las diferencias pendientes son estas:
 
-- **Propagación de luz:** un shader no reemplaza los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. La reconstrucción actúa sobre los datos que ya expone el motor moderno.
-- **Lightmap moderno:** las coordenadas del lightmap actual solo pueden convertirse de forma aproximada en los niveles históricos de Beta. La correspondencia no implica que las dos simulaciones de iluminación sean idénticas.
-- **Interpolación temporal:** determinadas funciones históricas recibían fracciones de tick o datos del motor que no siempre están disponibles de la misma forma en el shader.
-- **Campo climático (v0.9.0):** el ZIP universal funciona sin editar código; con el Climate Bridge obtiene la semilla del mundo local y reconstruye el ruido espacial histórico. Java usa `double` y GLSL `float`, por lo que no se promete igualdad bit a bit aunque la prueba visual manual de v0.9.0 haya sido aprobada.
-- **Sol y luna:** el proyecto se centra en el cielo, las estrellas y la niebla; no reconstruye de forma completa la geometría, el movimiento o las fases de los cuerpos celestes históricos.
-- **Geometría de nubes:** las nubes utilizan la geometría del motor moderno; todavía no se ha reproducido íntegramente el sistema de celdas, desplazamiento y múltiples pasadas de Beta.
-- **Altura de nube:** Y=260,99 es una adaptación fija al rango vertical moderno; puede no ser ideal sobre todos los picos.
-- **Niebla por dimensión:** la ruta del End depende de los parámetros nativos que proporcione la versión de Iris utilizada.
-- **Compatibilidad de renderizado:** los pases y uniformes disponibles pueden variar entre versiones de Minecraft, Iris y Sodium.
-- **Fidelidad visual:** la prueba manual de v0.9.0 fue aprobada por el autor; nuevas combinaciones de Minecraft, Iris, Sodium, semillas o clima pueden requerir validación adicional.
+- **Propagación de luz:** un shader no ejecuta ni sustituye los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. Trabaja con los datos que expone el motor moderno.
+- **Lightmap moderno:** la conversión de las coordenadas del lightmap actual a los niveles discretos de Beta sigue siendo aproximada. La curva visual puede reproducirse, pero no la simulación de iluminación completa.
+- **Interpolación temporal:** algunos cálculos históricos recibían fracciones de tick o datos del motor que no siempre se exponen en Iris de la misma forma. Puede haber pequeñas diferencias durante transiciones.
+- **Campo climático del cielo:** se corrigió el valor neutral fijo. El ZIP universal usa la temperatura del bioma que expone Iris como fallback; para reconstruir el campo espacial de Beta se necesita Beta173 Climate Bridge con acceso a la semilla real, o generar un ZIP específico de semilla. En un mundo de un jugador el bridge obtiene la semilla automáticamente. En un servidor remoto, el administrador debe instalarlo y habilitar explícitamente `shareWorldSeed=true`; la opción está desactivada por privacidad. Sin esa cooperación, el fallback por bioma moderno sigue funcionando, pero no equivale al ruido climático espacial de Beta. Aunque el cálculo histórico esté disponible, no se promete paridad píxel a píxel con el renderer moderno.
+- **Geometría de nubes:** v0.9.1 ya incluye una malla personalizada inspirada en Beta, una máscara de nubes y sombreado por cara; por tanto, ya no es correcto describirla como si usara únicamente la geometría moderna. Sigue pendiente una matriz de pruebas visuales en el juego para cobertura, clipping, transparencia, profundidad y desplazamiento en distintas combinaciones de Minecraft/Iris/Sodium. El fallback a la geometría moderna se puede seleccionar desde Shader Pack Settings.
+- **Altura de las nubes:** Y=260,99 es una adaptación fija al rango vertical moderno, no una conversión geométrica perfecta ni una altura que se ajuste automáticamente al relieve.
+- **Niebla por dimensión:** el End conserva los parámetros nativos de niebla que expone la versión de Iris instalada; esos parámetros pueden variar entre versiones.
+- **Sol, luna y fases:** el proyecto reconstruye principalmente iluminación, niebla, cielo, estrellas y nubes. No reconstruye por completo la geometría ni todas las fases/movimientos de los cuerpos celestes de Beta.
+- **Compatibilidad de renderizado:** los pases, uniformes y el comportamiento del geometry shader dependen de las versiones de Minecraft, Iris y Sodium. La compilación y las pruebas automatizadas reducen el riesgo, pero no cubren todas las instalaciones.
+- **Fidelidad visual global:** la prueba visual manual que se aprobó corresponde a v0.9.0 y no valida automáticamente la geometría añadida en v0.9.1 ni las combinaciones futuras de software, semillas o clima. La geometría de nubes v0.9.1 requiere comprobación visual en la instancia concreta.
 
-Estas limitaciones son parte de la documentación del proyecto, no una lista de problemas que deban darse necesariamente en todas las instalaciones. Su efecto debe comprobarse con la combinación de software concreta.
+Estas limitaciones describen diferencias conocidas de alcance y validación; no implican que todos los usuarios vayan a experimentar artefactos. La fidelidad debe comprobarse con la versión real de Minecraft, Iris y Sodium que se utilice.
 
 ---
 
@@ -516,8 +518,8 @@ Estas limitaciones son parte de la documentación del proyecto, no una lista de 
 
 Las siguientes líneas representan trabajo potencial, no funciones que deban considerarse ya terminadas:
 
-- Corregir y verificar el sombreado de las nubes al observarlas desde arriba y desde abajo, manteniendo una clasificación estable de cada cara.
-- Revisar las diferencias entre la geometría de nubes de Beta y la geometría nativa moderna, sin romper la compatibilidad con Iris.
+- Validar visualmente la geometría de nubes de v0.9.1 desde arriba, abajo y los laterales; ajustar cobertura, clipping, transparencia, profundidad o desplazamiento solo si las pruebas revelan defectos.
+- Comparar la malla personalizada de v0.9.1 con capturas de referencia de Beta 1.7.3 y conservar la geometría moderna como fallback de compatibilidad.
 - Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
 - Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
 - Ampliar la matriz de validación climática de v0.9.0 con más semillas, coordenadas, horas y condiciones meteorológicas, comparando los resultados con la referencia Java.
