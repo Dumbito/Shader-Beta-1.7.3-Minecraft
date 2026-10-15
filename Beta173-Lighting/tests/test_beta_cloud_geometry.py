@@ -53,7 +53,13 @@ class BetaCloudGeometryTests(unittest.TestCase):
         gsh = (SHADERS / "gbuffers_clouds.gsh").read_text(encoding="utf-8")
         fsh = (SHADERS / "gbuffers_clouds.fsh").read_text(encoding="utf-8")
         cfg = (SHADERS / "lib" / "config.glsl").read_text(encoding="utf-8")
-        self.assertIn("BETA_CUSTOM_CLOUD_GEOMETRY", cfg)
+        self.assertIn("#define BETA_CUSTOM_CLOUD_GEOMETRY 0 // [0 1]", cfg)
+        self.assertIn("#elif BETA_CUSTOM_CLOUD_GEOMETRY", fsh)
+        self.assertIn("#if BETA_CUSTOM_CLOUD_GEOMETRY", gsh)
+        # Estable por defecto: pasa el mesh original y conserva el alfa del motor.
+        self.assertIn("cloudColor = sourceCloudColor[i];", gsh)
+        self.assertIn("cloudViewPos = sourceCloudViewPos[i];", gsh)
+        self.assertIn("fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);", fsh)
         for shade in ("1.0", "0.7", "0.9", "0.8"):
             self.assertIn(shade, gsh)
         self.assertIn("ticks * 0.03", gsh)

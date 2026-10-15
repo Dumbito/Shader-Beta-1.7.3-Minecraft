@@ -1,6 +1,9 @@
 # Beta173 Lighting
 ### Reconstruyendo la iluminación, el cielo y la atmósfera de Minecraft Beta 1.7.3 en Minecraft moderno
 
+> **Incidencia de nubes en v0.9.1:** se han observado nubes translúcidas, solo un marco blanco o interiores ausentes. La causa probable es la reconstrucción de 840 caras dependiente de `gl_PrimitiveIDIn` del mesh nativo, cuyo número de draws/primitivas puede variar. Mientras se valida una corrección, abre **Shader Pack Settings** en el ZIP oficial y desactiva **BETA_CUSTOM_CLOUD_GEOMETRY** para recuperar la geometría nativa del juego con sombreado Beta. La rama [fix/v0.9.2-cloud-geometry-stable-default](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/fix/v0.9.2-cloud-geometry-stable-default) cambia esa opción a desactivada por defecto; es un candidato de corrección, **todavía no un ZIP oficial ni una corrección visualmente validada**.
+
+
 <p align="center">
   <strong>Un proyecto de ingeniería inversa visual, traducción matemática y shaders GLSL para Iris; v0.9.1 es su versión oficial actual.</strong>
 </p>

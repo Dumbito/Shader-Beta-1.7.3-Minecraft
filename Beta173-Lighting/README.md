@@ -1,5 +1,9 @@
 # Beta173 Lighting v0.9.1 — campo climático universal y geometría de nubes Beta (versión oficial)
 
+> **Aviso de compatibilidad de nubes (v0.9.1):** se ha reportado que la geometría custom puede verse transparente, como un marco blanco o con zonas interiores ausentes en algunas combinaciones de Minecraft/Iris/Sodium. La causa probable es que el geometry shader distribuye 840 caras según `gl_PrimitiveIDIn * 16`, una estrategia que no garantiza el mismo número de invocaciones si el motor divide la geometría en distintos draws.
+>
+> En esta rama correctiva, la geometría reconstruida se conserva como opción **experimental** pero queda **desactivada por defecto**. El modo predeterminado pasa la malla nativa del juego y conserva su alfa. Hasta que se publique un ZIP corregido, los usuarios del paquete oficial 0.9.1 pueden abrir **Shader Pack Settings** y desactivar **BETA_CUSTOM_CLOUD_GEOMETRY** (o la opción de geometría Beta de nubes). Esta corrección aún requiere confirmación visual en el entorno real y no debe considerarse un lanzamiento oficial.
+
 Shaderpack para Iris con fallback climático universal, port del ruido histórico de Beta 1.7.3 mediante el Climate Bridge opcional y reconstrucción de geometría de nubes Beta. **v0.9.1 es la versión oficial publicada.** La suite automatizada valida el paquete y enlaza los programas GLSL, incluida la etapa geometry; la geometría de nubes todavía requiere comprobación visual dentro de la instancia exacta de Minecraft/Iris/Sodium.
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
