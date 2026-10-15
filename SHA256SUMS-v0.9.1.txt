@@ -1,2 +1,2 @@
-d2be4c5aee3b82bcba9b383af6e2b28b9cd30a22f48adc55f6a2967503e05a29  Beta173-Lighting-0.9.1.zip
+3b38e9eadae752186479330d7ce9ed09ee9efc6798d10cecb1a7a9eccd608dd8  Beta173-Lighting-0.9.1.zip
 21a0047abd1baf37393444e34736918fc83f0c83e71f2c2206d7aa8e27d4e11f  Beta173-Climate-Bridge-0.1.0-mc26.3.jar
