@@ -1,0 +1,129 @@
+name: Build and publish v0.9 pre-release downloads
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Beta173-Lighting/**"
+      - ".github/workflows/publish-v09.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test and GLSL tools
+        run: |
+          python -m pip install --upgrade pip numpy
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools zip unzip
+
+      - name: Run regression suite
+        run: python -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+
+      - name: Build the installable v0.9 base pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Beta173-Lighting/tools/build_pack.py 0.9.0-pre1
+          # Do not ship a seedless climate permutation. The base pack keeps its documented fallback.
+          zip -q -d Beta173-Lighting-0.9.0-pre1.zip 'shaders/textures/beta173_climate_gradient.png' || true
+          cat > BETA173-CLIMATE-INFO.txt <<'EOF'
+          Beta173 Lighting v0.9.0-pre1 — paquete base universal
+          Estado: pre-release. Aun no se considera lanzamiento estable; falta validacion visual en Minecraft.
+          Este ZIP es instalable, pero el campo climatico exacto no se activa por defecto porque cada mundo
+          tiene su propia semilla. La base conserva el fallback neutral, sin usar una tabla de otra semilla.
+          Para activar el ruido historico de Beta, descarga el kit Beta173-Lighting-v0.9-climate-builder.zip,
+          extraelo y ejecuta:
+            python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo" --output-dir "$HOME/Descargas"
+          Para servidores, usa --seed SEMILLA (la que muestra /seed). El resultado es otro ZIP, especifico
+          para ese mundo. La reproduccion usa float en GLSL y aun necesita verificacion visual.
+          EOF
+          zip -q Beta173-Lighting-0.9.0-pre1.zip BETA173-CLIMATE-INFO.txt
+          rm BETA173-CLIMATE-INFO.txt
+          unzip -t Beta173-Lighting-0.9.0-pre1.zip
+          if unzip -Z1 Beta173-Lighting-0.9.0-pre1.zip | grep -q '^shaders/lib/'; then
+            echo "Error: las librerias GLSL no deben quedarse como archivos separados en el pack"
+            exit 1
+          fi
+          unzip -Z1 Beta173-Lighting-0.9.0-pre1.zip | while read -r file; do
+            case "$file" in
+              *.vsh|*.fsh)
+                unzip -p Beta173-Lighting-0.9.0-pre1.zip "$file" | grep -q '#include' && {
+                  echo "Include GLSL pendiente: $file"; exit 1;
+                } || true
+                ;;
+            esac
+          done
+
+      - name: Build a seed-specific test pack and link GLSL programs
+        shell: bash
+        run: |
+          set -euo pipefail
+          temp_dir="$(mktemp -d)"
+          trap 'rm -rf "$temp_dir"' EXIT
+          python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789 --output-dir "$temp_dir"
+          pack_zip="$(find "$temp_dir" -maxdepth 1 -name 'Beta173-Lighting-0.9-climate-seed-*.zip' -print -quit)"
+          test -n "$pack_zip"
+          unzip -t "$pack_zip"
+          mkdir -p "$temp_dir/pack"
+          unzip -q "$pack_zip" -d "$temp_dir/pack"
+          for program in gbuffers_armor_glint gbuffers_clouds gbuffers_skybasic gbuffers_terrain gbuffers_textured_lit; do
+            cp "$temp_dir/pack/shaders/$program.vsh" "$temp_dir/$program.vert"
+            cp "$temp_dir/pack/shaders/$program.fsh" "$temp_dir/$program.frag"
+            glslangValidator -l "$temp_dir/$program.vert" "$temp_dir/$program.frag"
+          done
+
+      - name: Build the no-code-edit climate builder bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > LEEME-GENERADOR-CLIMATICO.txt <<'EOF'
+          BETA173 LIGHTING — KIT GENERADOR CLIMATICO v0.9
+          Este archivo es un kit de fuentes y herramientas, NO el shaderpack instalable.
+          Extrae el ZIP y ejecuta desde una terminal:
+            python3 Beta173-Lighting/tools/configure_climate_pack.py --world "/ruta/a/saves/Mi mundo" --output-dir "$HOME/Descargas"
+          O, para un servidor:
+            python3 Beta173-Lighting/tools/configure_climate_pack.py --seed 123456789 --output-dir "$HOME/Descargas"
+          Tambien puedes ejecutar el programa sin opciones; pedira la semilla.
+          La herramienta genera un ZIP especifico para la semilla, valida el ZIP y no modifica las fuentes.
+          No edites GLSL ni reemplaces texturas a mano. Cada mundo con una semilla distinta requiere
+          generar su propio ZIP. La v0.9 sigue siendo pre-release hasta probar el aspecto visual en Minecraft.
+          EOF
+          zip -qr Beta173-Lighting-v0.9-climate-builder.zip \
+            LEEME-GENERADOR-CLIMATICO.txt \
+            Beta173-Lighting/README.md \
+            Beta173-Lighting/shaders \
+            Beta173-Lighting/tools \
+            Beta173-Lighting/tests/test_v09_climate_noise.py \
+            -x '*/__pycache__/*' '*.pyc' 'Beta173-Lighting/shaders/textures/beta173_climate_gradient.png'
+          rm LEEME-GENERADOR-CLIMATICO.txt
+          unzip -t Beta173-Lighting-v0.9-climate-builder.zip
+
+      - name: Publish generated downloads to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Beta173-Lighting-0.9.0-pre1.zip Beta173-Lighting-v0.9-climate-builder.zip
+          if git diff --cached --quiet; then
+            echo "Los ZIP publicados ya coinciden con las fuentes."
+          else
+            git commit -m "build(v0.9): publish pre-release shaderpack and climate builder"
+            git push origin HEAD:main
+          fi
