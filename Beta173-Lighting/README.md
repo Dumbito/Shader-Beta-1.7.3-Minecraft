@@ -1,8 +1,8 @@
 # Beta173 Lighting v1.0.0 — primera versión estable oficial
 
-> **Perfil estable v1.0.0:** la geometría nativa de Minecraft se conserva por defecto para maximizar la compatibilidad con Iris/Sodium; la geometría Beta personalizada queda como opción experimental y puede activarse desde Shader Pack Settings. El paquete oficial incluye pruebas diferenciales numéricas ejecutadas contra una referencia Java del código de Beta 1.7.3. Dichas pruebas no simulan todo el renderer y no sustituyen una inspección visual en juego.
+> **Perfil estable v1.0.0:** la geometría nativa de Minecraft se conserva por defecto para maximizar la compatibilidad con Iris/Sodium. La geometría de nubes Beta personalizada queda como opción experimental, activable desde Shader Pack Settings. El paquete incluye una matriz diferencial contra una referencia Java de Beta 1.7.3; la suite valida fórmulas y paquete, pero no simula todas las rutas del renderer.
 
-Shaderpack para Iris con fallback climático universal, port del ruido histórico de Beta 1.7.3 mediante el Climate Bridge opcional y geometría de nubes Beta experimental. **v1.0.0 es la primera versión estable oficial.** con fallback climático universal, port del ruido histórico de Beta 1.7.3 mediante el Climate Bridge opcional y reconstrucción de geometría de nubes Beta. **v1.0.0 es la primera versión estable oficial.** La suite automatizada valida el paquete y enlaza los programas GLSL, incluida la etapa geometry; la geometría de nubes todavía requiere comprobación visual dentro de la instancia exacta de Minecraft/Iris/Sodium.
+Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 es la primera versión estable oficial.**
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
