@@ -42,9 +42,11 @@
 // al pase del motor.
 #define BETA_STAR_FIELD
 
-// Geometría clásica de nubes de Beta, mediante geometry shader de Iris.
-// La opción aparece en Shader Pack Settings; no hace falta editar el archivo a mano.
-#define BETA_CUSTOM_CLOUD_GEOMETRY // [ON OFF]
+// Geometría experimental de nubes Beta mediante geometry shader.
+// 0 = geometría nativa de Minecraft + color/sombreado Beta (modo estable por defecto).
+// 1 = malla reconstruida de Beta (experimental; puede depender del particionado de draws Iris).
+// La opción se puede cambiar desde Shader Pack Settings; no hace falta editar este archivo.
+#define BETA_CUSTOM_CLOUD_GEOMETRY 0 // [0 1]
 
 // Color de las nubes:
 //   0 = color y sombreado de Beta (World.drawClouds + caras 1.0 / 0.7 / 0.9 / 0.8). Ignora el

@@ -41,7 +41,7 @@ float beta173CloudFaceShade() {
 void main() {
 #if BETA_DEBUG == 1
     fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-#elif defined(BETA_CUSTOM_CLOUD_GEOMETRY)
+#elif BETA_CUSTOM_CLOUD_GEOMETRY
     vec4 mask = texture(beta173CloudMap, betaCloudUV);
     if (mask.a < 0.01) discard;
     fragColor = vec4(beta173CloudColor() * betaCloudShade, 0.8 * mask.a);
@@ -50,6 +50,7 @@ void main() {
 #elif BETA_CLOUD_COLOR_MODE == 2
     fragColor = vec4(cloudColor.rgb * beta173CloudColor(), cloudColor.a);
 #else
+    // Modo estable: pasa la geometría nativa del motor; conserva su alfa sin volver a multiplicarlo.
     fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);
 #endif
 }

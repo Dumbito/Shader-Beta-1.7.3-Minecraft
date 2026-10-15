@@ -207,7 +207,7 @@ void betaCloudEmitFaceOrdinal(int faceOrdinal) {
 }
 
 void main() {
-#ifdef BETA_CUSTOM_CLOUD_GEOMETRY
+#if BETA_CUSTOM_CLOUD_GEOMETRY
     // One source triangle dispatches 16 historical faces; 53 triangles cover all 840.
     // The geometry is emitted inside the native cloud draw to retain scene depth testing.
     int firstFace = gl_PrimitiveIDIn * 16;
@@ -217,7 +217,8 @@ void main() {
         if (face < 840) betaCloudEmitFaceOrdinal(face);
     }
 #else
-    // Fallback to the engine geometry if the option is disabled.
+    // Modo estable: passthrough del mesh nativo. No depende de gl_PrimitiveIDIn
+    // para reconstruir una malla global, porque Iris puede dividirlo en varios draws.
     for (int i = 0; i < 3; ++i) {
         gl_Position = gl_in[i].gl_Position;
         cloudColor = sourceCloudColor[i];
