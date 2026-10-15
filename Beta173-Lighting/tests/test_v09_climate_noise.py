@@ -79,6 +79,21 @@ class LegacyClimateTests(unittest.TestCase):
         self.assertGreater(len(values), 8)
 
 
+class ShaderPortTests(unittest.TestCase):
+    def test_sky_uses_high_precision_player_position_not_camera_location_alone(self):
+        source = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        self.assertIn("uniform ivec3 cameraPositionInt;", source)
+        self.assertIn("uniform vec3 cameraPositionFract;", source)
+        self.assertIn("uniform vec3 eyePosition;", source)
+        self.assertIn("cameraWorldXZ + (eyePosition.xz - cameraPosition.xz)", source)
+        self.assertIn("floor(playerWorldXZ + vec2(BETA_CLIMATE_ORIGIN_X, BETA_CLIMATE_ORIGIN_Z))", source)
+
+    def test_hsb_conversion_matches_java_rgb_byte_rounding(self):
+        source = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        self.assertIn("int sector = int(h);", source)
+        self.assertIn("return floor(rgb * 255.0 + 0.5) / 255.0;", source)
+
+
 class GeneratedAssetTests(unittest.TestCase):
     def test_shader_texture_y_index_compensates_png_scanline_order(self):
         shader = (ROOT / "shaders" / "lib" / "climate_noise.glsl").read_text(encoding="utf-8")

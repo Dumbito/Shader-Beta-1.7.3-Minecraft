@@ -25,7 +25,7 @@ python3 Beta173-Lighting/tools/generate_climate_seed.py --seed <semilla-exacta-d
 python3 Beta173-Lighting/tools/build_pack.py 0.9-climate
 ```
 
-Usa el ZIP resultante únicamente con el mundo para el que generaste la textura. Si Iris ha reiniciado las coordenadas de `cameraPosition`, ajusta `--origin-x` y `--origin-z` y vuelve a generar. La aproximación puede no coincidir en cámara de tercera persona, y GLSL `float` no reproduce bit a bit la aritmética `double` de Java. Falta comprobarlo visualmente en el cliente; esta rama no debe tratarse aún como lanzamiento estable.
+Usa el ZIP resultante únicamente con el mundo para el que generaste la textura. Si Iris ha reiniciado las coordenadas de `cameraPosition`, ajusta `--origin-x` y `--origin-z` y vuelve a generar. El port usa `eyePosition` con `cameraPositionInt`/`cameraPositionFract` para reconstruir la posición del jugador incluso si la cámara está desplazada; falta validar casos como vehículos y cambios de origen. GLSL `float` no reproduce bit a bit la aritmética `double` de Java. Falta comprobarlo visualmente en el cliente; esta rama no debe tratarse aún como lanzamiento estable.
 
 ## Instalación
 
