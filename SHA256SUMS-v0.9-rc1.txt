@@ -1,0 +1,2 @@
+1fe68a18e1af8917b75e8d60c7868c5d3bdb16e77bcaecb640271875fe74d44c  Beta173-Lighting-0.9.0-universal-rc1.zip
+21a0047abd1baf37393444e34736918fc83f0c83e71f2c2206d7aa8e27d4e11f  Beta173-Climate-Bridge-0.1.0-experimental.jar
