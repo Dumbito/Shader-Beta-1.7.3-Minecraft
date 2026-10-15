@@ -1,12 +1,7 @@
-name: Package Beta173 Lighting v0.7.2
+name: Legacy package Beta173 Lighting v0.7.2 (manual only)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "Beta173-Lighting/**"
-      - ".github/workflows/package-v07.yml"
 
 permissions:
   contents: write
@@ -17,6 +12,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install Python test dependency
+        run: python3 -m pip install --disable-pip-version-check numpy
 
       - name: Run Python regression tests
         run: python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v

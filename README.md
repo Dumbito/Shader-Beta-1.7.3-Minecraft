@@ -63,7 +63,7 @@ El resultado es una reconstrucción progresiva, no una afirmación de equivalenc
 - [Qué proyectos y tecnologías utilizamos](#-qué-proyectos-y-tecnologías-utilizamos)
 - [Cómo trasladamos Beta a un motor moderno](#-cómo-trasladamos-beta-a-un-motor-moderno)
 - [Los sistemas que reconstruimos](#-los-sistemas-que-reconstruimos)
-- [Historia completa: v0.1–v0.9.0-pre1](#-historia-completa-v01v081)
+- [Historia completa: v0.1–v0.9.0-pre1](#-historia-completa-v01v090-pre1)
 - [Arquitectura del repositorio](#-arquitectura-del-repositorio)
 - [Configuración](#️-configuración)
 - [Instalación](#-instalación)
