@@ -12,6 +12,18 @@ flat in float betaCloudShade;
 
 out vec4 fragColor;
 
+// Rampa configurable: mantiene legibles las nubes al atardecer y las oscurece
+// poco a poco hasta la noche. Solo afecta el RGB; no toca alfa ni geometria.
+float beta173CloudNightFloor() {
+    float ticks = mod(float(worldTime), 24000.0);
+    float dusk = smoothstep(BETA_CLOUD_DUSK_START_TICK, BETA_CLOUD_DUSK_END_TICK, ticks);
+    return mix(BETA_CLOUD_DUSK_MIN_DAYLIGHT, BETA_CLOUD_NIGHT_MIN_DAYLIGHT, dusk);
+}
+
+float beta173CloudDaylight() {
+    return max(beta173DayFactor(), beta173CloudNightFloor());
+}
+
 vec3 beta173CloudColor() {
     vec3 color = vec3(1.0);
     float rain = beta173Rain();
@@ -20,8 +32,11 @@ vec3 beta173CloudColor() {
         float k = 1.0 - rain * 0.95;
         color = color * k + vec3(gray) * (1.0 - k);
     }
-    float day = beta173DayFactor();
+
+    // Respuesta continua durante el ciclo completo; no hay corte en 12000/13000 ticks.
+    float day = beta173CloudDaylight();
     color *= vec3(day * 0.9 + 0.1, day * 0.9 + 0.1, day * 0.85 + 0.15);
+
     float thunder = beta173Thunder();
     if (thunder > 0.0) {
         float gray = dot(color, vec3(0.3, 0.59, 0.11)) * 0.2;
@@ -50,7 +65,7 @@ void main() {
 #elif BETA_CLOUD_COLOR_MODE == 2
     fragColor = vec4(cloudColor.rgb * beta173CloudColor(), cloudColor.a);
 #else
-    // Modo estable: pasa la geometría nativa del motor; conserva su alfa sin volver a multiplicarlo.
+    // Modo estable: conserva el alfa/máscara nativa; el tiempo solo modifica el RGB.
     fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);
 #endif
 }

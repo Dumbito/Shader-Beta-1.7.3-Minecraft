@@ -1,8 +1,8 @@
-# Beta173 Lighting v1.0.0 — primera versión estable oficial
+# Beta173 Lighting v1.0.1 — parche de mantenimiento para nubes
 
 > **Perfil estable v1.0.0:** la geometría nativa de Minecraft se conserva por defecto para maximizar la compatibilidad con Iris/Sodium. La geometría de nubes Beta personalizada queda como opción experimental, activable desde Shader Pack Settings. El paquete incluye una matriz diferencial contra una referencia Java de Beta 1.7.3; la suite valida fórmulas y paquete, pero no simula todas las rutas del renderer.
 
-Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 es la primera versión estable oficial.**
+Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 sigue siendo la base estable; v1.0.1 es el parche de mantenimiento centrado en la visibilidad nocturna de las nubes.**
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
@@ -18,7 +18,8 @@ La ruta heredada de ZIP específico por semilla sigue disponible para mundos don
 
 ## Descargas oficiales
 
-- [**ZIP oficial v1.0.0 — primera versión estable, instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip): clima universal con fallback automático; la geometría nativa de nubes es predeterminada y la malla Beta custom queda como opción experimental.
+- [**ZIP oficial v1.0.1 — parche de visibilidad nocturna de nubes, instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.1.zip): mantiene geometría/altura; incorpora una rampa RGB configurable desde el atardecer hasta la noche, sin alterar el alfa.
+- [**ZIP v1.0.0 — primera versión estable anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip): clima universal con fallback automático; la geometría nativa de nubes es predeterminada y la malla Beta custom queda como opción experimental.
 - [**ZIP universal v0.9.0 — versión oficial anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip): fallback por temperatura del bioma si el bridge no está activo; sin el bridge, no simula el ruido espacial histórico de Beta.
 - [**Beta173 Climate Bridge 0.1.0 — Fabric 26.3 (opcional)**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar): port del ruido histórico mediante el uniforme `temperature` de Iris.
 - [**ZIP base v0.9.0-pre1 — instalable**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip): paquete general con fallback seguro; no activa una tabla climática de una semilla ajena.
@@ -93,9 +94,21 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 
 La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. La matriz diferencial se amplía ahora en v1.0.0; la aprobación visual histórica de v0.9.0 no debe interpretarse como certificación visual de todas las combinaciones de la versión nueva.
 
-## Versión oficial v1.0.0
+## Parche v1.0.1 — nubes visibles durante la noche
 
-Descarga `Beta173-Lighting-1.0.0.zip` desde el [README principal del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft). Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. La geometría de nubes Beta se configura con `BETA_CUSTOM_CLOUD_GEOMETRY` desde **Shader Pack Settings**; está desactivada por defecto. Actívala únicamente para probar la malla reconstruida de forma experimental; desactívala para volver a la malla moderna estable. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
+El parche conserva la forma y la altura de nubes de v1.0.0. Incorpora una rampa para el **color RGB** configurable en Shader Pack Settings: por defecto empieza en el tick `12000` con un mínimo RGB de `0.60` y baja progresivamente hasta el valor nocturno `0.12` en el tick `18000`. Los ticks de inicio/fin y ambos niveles se pueden ajustar en el menú, sin editar archivos.
+
+El modo estable preserva `cloudColor.a` del mesh nativo. La geometría Beta experimental conserva `mask.a` de la textura de nubes. Las pruebas comprueban la continuidad de la curva en anochecer, noche y amanecer; no sustituyen la comprobación visual de clipping/profundidad con Iris y Sodium.
+
+### Instalación del parche
+
+Descarga [`Beta173-Lighting-1.0.1.zip`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.1.zip), cópialo sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. No necesitas editar código. La rampa de atardecer, sus ticks de inicio/fin y el nivel nocturno se ajustan desde Shader Pack Settings.
+
+**Nota técnica:** si las nubes siguen desapareciendo por completo cuando el color sigue visible, eso apunta a geometría, culling o profundidad y requiere una captura/prueba dentro del juego; no se puede atribuir ni declarar arreglado como error de depth-buffer solo con las pruebas de color.
+
+## Versión base v1.0.0
+
+Descarga [`Beta173-Lighting-1.0.0.zip`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip) como versión base anterior. Copia el ZIP sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. La geometría de nubes Beta se configura con `BETA_CUSTOM_CLOUD_GEOMETRY` desde **Shader Pack Settings**; está desactivada por defecto. Actívala únicamente para probar la malla reconstruida de forma experimental; desactívala para volver a la malla moderna estable. Para el ruido climático espacial histórico, instala también el Climate Bridge opcional en la instancia Fabric compatible.
 
 ## Geometría de nubes Beta 1.7.3 (v1.0.0)
 
