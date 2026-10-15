@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-experimental.zip">Descargar v0.9 universal (experimental)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip">Descargar v0.9.0 universal RC1 (pruebas CI superadas; prueba visual pendiente)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar">Descargar Climate Bridge 0.1.0 (Fabric 26.3)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático por semilla</a> ·
@@ -19,15 +19,15 @@
 
 ---
 
-## 🧪 v0.9 universal — candidato experimental en validación
+## 🧪 v0.9.0 universal — RC1 publicado en main; falta validación visual
 
-La rama [`feature/v0.9-universal-climate`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/feature/v0.9-universal-climate) mantiene el paquete universal como alternativa de prueba. El **Beta173 Climate Bridge** es un mod Fabric separado que porta el ruido Simplex climático de Beta 1.7.3 y reemplaza el valor del uniforme `temperature` de Iris en tiempo de ejecución. Un workflow compila el mod, ejecuta pruebas y publica un JAR y un ZIP de código fuente en la raíz de esta rama principal cuando el build termina correctamente. La validación visual dentro de Minecraft sigue pendiente.
+El candidato universal v0.9.0 ya está generado y publicado en `main` como [RC1 descargable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip). GitHub Actions ejecuta las pruebas de regresión, construye el ZIP, comprueba su integridad, valida que no incluya una tabla climática de una semilla concreta y enlaza los cinco pares de programas GLSL. El workflow separado también compila y ejecuta las pruebas del **Beta173 Climate Bridge**. Esto valida el empaquetado y el código automatizable, pero no sustituye la prueba visual dentro de Minecraft.
 
 - **ZIP universal sin mod:** usa automáticamente el uniforme `temperature` de Iris para la temperatura base del bioma actual. Funciona en cualquier mundo sin preparación, pero no reconstruye el campo climático espacial original de Beta.
-- **Con Beta173 Climate Bridge (Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador usa automáticamente la semilla real del servidor integrado y devuelve el color HSB/RGB histórico de 8 bits sin pedir configuración por mundo.
+- **Con Beta173 Climate Bridge (Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene automáticamente la semilla real del servidor integrado y calcula la temperatura espacial histórica; el shader aplica la conversión HSB y cuantización RGB de 8 bits, aunque el pipeline moderno todavía necesita verificación visual.
 - **Multijugador remoto:** si el servidor tiene el mismo mod y el administrador activa explícitamente `shareWorldSeed=true` en `config/beta173-climate-bridge.properties`, el cliente recibe la semilla real y activa el campo histórico. La opción viene desactivada por privacidad. Sin cooperación del servidor, Minecraft entrega una semilla ofuscada y el ZIP recurre automáticamente a la temperatura del bioma moderno.
 
-Los enlaces de descarga del candidato universal solo deben considerarse válidos una vez que el workflow los publique en `main`. **La versión estable sigue siendo v0.8.1** hasta compilar el puente, corregir cualquier regresión y completar pruebas visuales en Minecraft.
+El ZIP RC1 y el mod compilado están disponibles desde `main`; el workflow publica también los hashes SHA-256. **La versión estable sigue siendo v0.8.1** hasta probar dentro de Minecraft el cielo, la niebla y las transiciones de bioma/clima, además del comportamiento del bridge en mundo local y multijugador. CI verde no equivale a una validación visual.
 
 
 ### Beta173 Climate Bridge — port climático mediante mod
@@ -44,7 +44,7 @@ El mod [Beta173-Climate-Bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Min
 
 ---
 
-## 🧪 v0.9.0-pre1 — reconstrucción del campo climático de Beta 1.7.3
+## 📦 v0.9.0-pre1 — paquete de transición anterior
 
 **Estado: v0.9.0-pre1 experimental; v0.8.1 sigue siendo la versión estable anterior.** Ya están publicados dos archivos: el [ZIP base instalable](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip), que mantiene el fallback neutral hasta conocer la semilla, y el [kit generador climático](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip), que crea un ZIP específico para tu mundo sin editar código. Iris no expone por sí solo la semilla cruda a los shaders; por eso el paquete de pre1 exigía generar datos por mundo. La rama universal añade un fallback sin semilla y un bridge opcional para recuperar el cálculo exacto cuando la semilla está disponible. Aunque las pruebas automatizadas y el empaquetado pasen, la v0.9 necesita validación visual dentro de Minecraft antes de ser declarada estable.
 

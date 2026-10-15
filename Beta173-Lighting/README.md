@@ -1,6 +1,6 @@
-# Beta173 Lighting v0.9 — campo climático universal (candidato experimental)
+# Beta173 Lighting v0.9.0 — campo climático universal (RC1)
 
-Shaderpack experimental para Iris que reconstruye el campo climático de Minecraft Beta 1.7.3. **La versión estable publicada sigue siendo v0.8.1**; el candidato universal de esta rama debe pasar CI y pruebas visuales antes de reemplazarla.
+Shaderpack para Iris con un fallback climático universal y un port opcional del ruido histórico de Beta 1.7.3. **Estado: RC1 / candidato a versión estable. La versión estable anterior sigue siendo v0.8.1** porque aún falta validación visual completa dentro de Minecraft.
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
@@ -10,12 +10,14 @@ Esta rama incorpora una ruta universal sin editar GLSL, reemplazar texturas ni i
 2. **Beta173 Climate Bridge (opcional, Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene la semilla real del servidor integrado, reconstruye en Java el Simplex histórico de cuatro octavas y pasa a Iris el color HSB/RGB exacto de 8 bits. Así no hace falta configurar una semilla por mundo.
 3. **Mundos multijugador remotos:** el cliente vanilla recibe una semilla ofuscada, no la semilla original. Si el servidor instala el mismo bridge y habilita explícitamente `shareWorldSeed=true` en `config/beta173-climate-bridge.properties`, puede enviar la semilla cruda al cliente. La opción está desactivada por defecto. Sin cooperación del servidor, el shaderpack conserva el fallback automático por bioma.
 
-El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. Ambos artefactos son experimentales. El shaderpack y sus enlaces GLSL ya pasan CI; la extensión multijugador del bridge debe completar una nueva compilación y aún falta comprobar el resultado visualmente en Minecraft.
+El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. La CI actual ejecuta la suite Python, construye y comprueba el ZIP universal, enlaza cinco pares GLSL y compila/prueba el bridge con Java 25. La CI no verifica la apariencia final ni la carga real del mod dentro del cliente de Minecraft; por eso este paquete queda como RC1 hasta completar esa comprobación visual.
 
 La ruta heredada de ZIP específico por semilla sigue disponible para mundos donde se conozca la semilla original; no es necesaria para instalar ni usar el ZIP universal.
 
 ## Descargas v0.9
 
+- [**ZIP universal v0.9.0 RC1 — instalable sin modificar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-universal-rc1.zip): fallback por temperatura del bioma si el bridge no está activo; no contiene la tabla climática de una semilla ajena.
+- [**Beta173 Climate Bridge 0.1.0 — Fabric 26.3 (opcional)**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar): port del ruido histórico mediante el uniforme `temperature` de Iris.
 - [**ZIP base v0.9.0-pre1 — instalable**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip): paquete general con fallback seguro; no activa una tabla climática de una semilla ajena.
 - [**Kit generador climático v0.9**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip): fuentes y herramienta para crear automáticamente el ZIP específico de tu mundo.
 - [**v0.8.1 — estable anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip).
@@ -100,3 +102,12 @@ python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
 ```
 
 Las pruebas de ruido y generación de activos cubren la reproducibilidad de `java.util.Random`, valores de regresión, construcción del mapa de gradientes, lectura de semilla NBT y la generación temporal del paquete. Las pruebas no simulan el renderizador completo de Minecraft.
+
+
+## Estado de validación del RC1
+
+- [Workflow universal y compilación del bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml): suite Python, empaquetado, integridad y enlace GLSL.
+- [Workflow independiente de compilación y pruebas del bridge](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/build-climate-bridge.yml): build, test y artefactos Fabric.
+- [Checksum SHA-256 del RC1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/SHA256SUMS-v0.9-rc1.txt).
+
+**Pendiente antes de llamarlo estable:** instalarlo en Minecraft 26.3 + Iris/Sodium y comprobar biomas fríos/templados/cálidos, transiciones entre biomas, día/noche, lluvia/tormenta, Nether/End, además de comprobar el bridge en singleplayer y verificar que el envío de semillas en servidores dedicados siga desactivado por defecto.
