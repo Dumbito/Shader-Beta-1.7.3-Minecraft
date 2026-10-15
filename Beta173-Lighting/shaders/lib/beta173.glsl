@@ -12,6 +12,11 @@ uniform vec3 cameraPositionFract;
 uniform vec3 eyePosition;
 uniform vec3 relativeEyePosition;
 
+uniform float temperature; // Iris: temperatura base del bioma actual (fallback universal).
+uniform float beta173LegacyClimateTemperature;
+uniform vec3 beta173LegacySkyRgb; // RGB histórico de 8 bits, calculado con aritmética Java.
+uniform bool beta173LegacyClimateAvailable; // true si el bridge conoce la semilla real del mundo.
+
 uniform int worldTime;
 uniform float rainStrength;
 uniform float thunderStrength; // Iris lo entrega ya ponderado por la lluvia, igual que getWeightedThunderStrength
@@ -113,27 +118,38 @@ vec3 beta173Hsb(float h, float s, float b) {
 float beta173SkyClimateTemperature() {
     // En Nether y End el cielo de Beta no utiliza este campo climático del Overworld.
     if (!hasSkylight) return BETA_SKY_TEMPERATURE;
-#if BETA_CLIMATE_SEED_CONFIGURED
 #ifdef BETA_CLIMATE_USE_VARYING
     return beta173ClimateTemperatureVarying;
 #else
-    // cameraPositionInt + cameraPositionFract recuperan la posición exacta de cámara.
-    // relativeEyePosition es (camera - cabeza); restarlo obtiene la posición de cabeza
-    // sin restar dos coordenadas de cámara que podrían usar un origen distinto tras un reset.
+    // El bridge suministra el campo de Beta a partir de la semilla real en mundos integrados.
+    if (beta173LegacyClimateAvailable) return beta173LegacyClimateTemperature;
+#if BETA_CLIMATE_SEED_CONFIGURED
+    // Ruta heredada: ZIP específico de semilla, generado por configure_climate_pack.py.
+    // cameraPositionInt + cameraPositionFract recuperan la posición de cámara.
     vec2 cameraWorldXZ = vec2(cameraPositionInt.xz) + cameraPositionFract.xz;
     vec2 playerWorldXZ = cameraWorldXZ - relativeEyePosition.xz;
     vec2 playerXZ = floor(playerWorldXZ);
     return beta173ClimateTemperature(playerXZ);
-#endif
 #else
-    return BETA_SKY_TEMPERATURE;
+    // Fallback automático y universal sin bridge ni semilla manual: temperatura base
+    // del bioma actual que Iris actualiza con el jugador. No es el ruido histórico exacto,
+    // pero evita el valor neutral fijo y funciona en cualquier mundo/servidor.
+    return temperature;
 #endif
+#endif
+}
+
+// BiomeGenBase.getSkyColorByTemp. El bridge calcula primero el RGB con Java
+// para conservar la cuantización HSBtoRGB de 8 bits; en el ZIP puro usamos Iris temperature.
+vec3 beta173SkyBaseColor() {
+    if (beta173LegacyClimateAvailable) return beta173LegacySkyRgb;
+    float t = clamp(beta173SkyClimateTemperature() / 3.0, -1.0, 1.0);
+    return beta173Hsb(0.62222224 - t * 0.05, 0.5 + t * 0.1, 1.0);
 }
 
 // World.getSkyColor + BiomeGenBase.getSkyColorByTemp
 vec3 beta173SkyColor() {
-    float t = clamp(beta173SkyClimateTemperature() / 3.0, -1.0, 1.0);
-    vec3 col = beta173Hsb(0.62222224 - t * 0.05, 0.5 + t * 0.1, 1.0) * beta173DayFactor();
+    vec3 col = beta173SkyBaseColor() * beta173DayFactor();
 
     float rain = beta173Rain();
     if (rain > 0.0) {

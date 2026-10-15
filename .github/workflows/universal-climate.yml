@@ -1,0 +1,117 @@
+name: v0.9 universal climate candidate
+
+on:
+  push:
+    branches:
+      - feature/v0.9-universal-climate
+    paths:
+      - "Beta173-Lighting/**"
+      - "Beta173-Climate-Bridge/**"
+      - ".github/workflows/universal-climate.yml"
+  pull_request:
+    paths:
+      - "Beta173-Lighting/**"
+      - "Beta173-Climate-Bridge/**"
+      - ".github/workflows/universal-climate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shaderpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip numpy
+
+      - name: Run all Python regression tests
+        run: python -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
+
+      - name: Install GLSL validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y glslang-tools
+
+      - name: Build universal shaderpack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Beta173-Lighting/tools/build_pack.py 0.9.0-universal-experimental
+          unzip -t Beta173-Lighting-0.9.0-universal-experimental.zip
+          mkdir -p /tmp/beta173-universal
+          unzip -q Beta173-Lighting-0.9.0-universal-experimental.zip -d /tmp/beta173-universal
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("/tmp/beta173-universal")
+          sky = (root / "shaders/gbuffers_skybasic.fsh").read_text()
+          props = (root / "shaders/shaders.properties").read_text()
+          assert "#include" not in sky
+          assert "uniform float temperature;" in sky
+          assert "beta173LegacyClimateAvailable" in sky
+          assert "return temperature;" in sky
+          assert "customTexture.beta173ClimateGradient" not in props
+          assert "#define BETA_CLIMATE_SEED_CONFIGURED 1" not in sky
+          for name in ("gbuffers_armor_glint", "gbuffers_clouds", "gbuffers_skybasic", "gbuffers_terrain", "gbuffers_textured_lit"):
+              for suffix in (".vsh", ".fsh"):
+                  source = (root / "shaders" / f"{name}{suffix}").read_text()
+                  assert "#include" not in source, f"include not resolved: {name}{suffix}"
+          print("Universal ZIP checks passed: no seed-specific texture, automatic temperature fallback, no includes.")
+          PY
+
+      - name: Link GLSL program pairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          pack="/tmp/beta173-universal/shaders"
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "$tmp"' EXIT
+          for program in gbuffers_armor_glint gbuffers_clouds gbuffers_skybasic gbuffers_terrain gbuffers_textured_lit; do
+            cp "$pack/$program.vsh" "$tmp/$program.vert"
+            cp "$pack/$program.fsh" "$tmp/$program.frag"
+            glslangValidator -l "$tmp/$program.vert" "$tmp/$program.frag"
+          done
+
+      - name: Upload universal shaderpack candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beta173-Lighting-0.9.0-universal-experimental
+          path: Beta173-Lighting-0.9.0-universal-experimental.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  climate-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+
+      - name: Compile the optional Iris bridge
+        run: gradle -p Beta173-Climate-Bridge build
+
+      - name: Upload bridge mod candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beta173-Climate-Bridge-0.1.0-experimental
+          path: Beta173-Climate-Bridge/build/libs/beta173-climate-bridge-0.1.0.jar
+          if-no-files-found: error
+          retention-days: 14

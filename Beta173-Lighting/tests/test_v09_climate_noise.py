@@ -199,11 +199,25 @@ class PackAutomationTests(unittest.TestCase):
                 self.assertIn("beta173ClimateTemperature", sky)
             self.assertEqual(source_before, source_props.read_text(encoding="utf-8"))
 
-    def test_unconfigured_source_has_safe_neutral_fallback(self):
+    def test_unconfigured_source_uses_automatic_universal_fallback(self):
         props = (ROOT / "shaders" / "shaders.properties").read_text(encoding="utf-8")
         self.assertNotIn("customTexture.beta173ClimateGradient", props)
         seed = (ROOT / "shaders" / "lib" / "climate_seed.glsl").read_text(encoding="utf-8")
         self.assertIn("#define BETA_CLIMATE_SEED_CONFIGURED 0", seed)
+        beta = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        self.assertIn("uniform float temperature;", beta)
+        self.assertIn("return temperature;", beta)
+        self.assertIn("beta173LegacyClimateAvailable", beta)
+        self.assertIn("beta173LegacySkyRgb", beta)
+
+    def test_iris_base_temperature_is_only_the_fallback_when_seed_is_unavailable(self):
+        beta = (ROOT / "shaders" / "lib" / "beta173.glsl").read_text(encoding="utf-8")
+        helper_branch = beta.index("if (beta173LegacyClimateAvailable) return beta173LegacyClimateTemperature;")
+        baked_seed_branch = beta.index("#if BETA_CLIMATE_SEED_CONFIGURED", helper_branch)
+        universal_fallback = beta.index("return temperature;", baked_seed_branch)
+        self.assertLess(helper_branch, baked_seed_branch)
+        self.assertLess(baked_seed_branch, universal_fallback)
+        self.assertIn("if (beta173LegacyClimateAvailable) return beta173LegacySkyRgb;", beta)
 
 
 class ShaderIntegrationTests(unittest.TestCase):

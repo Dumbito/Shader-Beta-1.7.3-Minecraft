@@ -1,6 +1,18 @@
-# Beta173 Lighting v0.9.0-pre1 — reconstrucción del campo climático
+# Beta173 Lighting v0.9 — campo climático universal (candidato experimental)
 
-Shaderpack experimental para Iris que reconstruye la temperatura espacial que Beta 1.7.3 usa para colorear el cielo. **La descarga estable del proyecto sigue siendo v0.8.1**; esta preversión debe probarse visualmente en Minecraft antes de considerarse un lanzamiento.
+Shaderpack experimental para Iris que reconstruye el campo climático de Minecraft Beta 1.7.3. **La versión estable publicada sigue siendo v0.8.1**; el candidato universal de esta rama debe pasar CI y pruebas visuales antes de reemplazarla.
+
+## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
+
+Esta rama incorpora una ruta universal sin editar GLSL, reemplazar texturas ni introducir la semilla manualmente:
+
+1. **Shaderpack universal, sin mods extra:** usa el uniforme `temperature` de Iris, actualizado automáticamente para el bioma actual. Funciona en mundos locales y servidores porque no requiere conocer la semilla. Es un respaldo dependiente del bioma moderno, no el ruido espacial exacto de Beta.
+2. **Beta173 Climate Bridge (opcional, Fabric 26.3 + Iris 1.11.6+):** en un mundo de un jugador obtiene la semilla real del servidor integrado, reconstruye en Java el Simplex histórico de cuatro octavas y pasa a Iris el color HSB/RGB exacto de 8 bits. Así no hace falta configurar una semilla por mundo.
+3. **Mundos multijugador remotos:** el cliente vanilla recibe una semilla ofuscada, no la semilla original. Sin cooperación del servidor es imposible reconstruir el ruido histórico exacto solo desde un ZIP cliente. El shaderpack mantiene por eso el fallback automático por bioma en lugar de producir un color neutral.
+
+El bridge es un mod separado del ZIP: un shaderpack no puede cargar código Java por sí mismo. Ambos artefactos son experimentales hasta que el workflow compile el mod, enlace los shaders y podamos comprobarlos visualmente en Minecraft.
+
+La ruta heredada de ZIP específico por semilla sigue disponible para mundos donde se conozca la semilla original; no es necesaria para instalar ni usar el ZIP universal.
 
 ## Descargas v0.9
 

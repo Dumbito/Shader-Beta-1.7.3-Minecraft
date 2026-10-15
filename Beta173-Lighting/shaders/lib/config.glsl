@@ -26,8 +26,10 @@
     #error BETA_RENDER_DISTANCE debe ser 0, 1, 2 o 3
 #endif
 
-// Fallback neutral solo mientras no se genere el campo climático para la semilla real.
-// Ejecuta tools/generate_climate_seed.py --seed <valor-de-/seed> para activar el port.
+// Fallback solo para rutas de dimensión sin cielo. En el Overworld:
+// - el ZIP universal usa automáticamente el uniforme Iris "temperature" si no conoce la semilla;
+// - Beta173 Climate Bridge activa el campo histórico exacto en mundos de un jugador;
+// - un ZIP específico de semilla usa climate_seed.glsl + climate_noise.glsl.
 #define BETA_SKY_TEMPERATURE 0.5
 
 // ---------------------------------------------------------------------------
