@@ -117,6 +117,7 @@ class LegacyClimateTests(unittest.TestCase):
         first = climate.create_octaves(123456789)[0]
         self.assertAlmostEqual(first.offset_x, 251.06314645013387, places=13)
         self.assertAlmostEqual(first.offset_z, 210.0285267002532, places=13)
+        self.assertEqual(first.permutation[:10], (51, 0, 168, 69, 160, 183, 205, 249, 255, 214))
 
     def test_climate_field_changes_with_world_coordinates(self):
         values = {climate.climate_temperature(777, x, -x) for x in range(-512, 513, 64)}
