@@ -76,6 +76,11 @@ class JavaRandomTests(unittest.TestCase):
             value -= 1 << 32
         self.assertEqual(value, -1155484576)
 
+    def test_next_int_matches_java_reference_sequence(self):
+        rng = climate.JavaRandom(42)
+        self.assertEqual([rng.next_int(bound) for bound in (251, 256, 255, 239)],
+                         [55, 13, 153, 112])
+
     def test_next_int_produces_values_inside_bounds(self):
         rng = climate.JavaRandom(9876)
         self.assertTrue(all(0 <= rng.next_int(256) < 256 for _ in range(500)))
