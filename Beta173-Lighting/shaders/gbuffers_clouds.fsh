@@ -3,7 +3,6 @@
 #include "/lib/beta173.glsl"
 
 uniform mat4 gbufferModelViewInverse;
-uniform vec3 cameraPosition;
 
 in vec4 cloudColor;
 in vec3 cloudViewPos;
@@ -22,7 +21,7 @@ vec3 beta173CloudColor() {
     }
 
     float day = beta173DayFactor();
-    color *= vec3(day, day, day);
+    color *= vec3(day * 0.9 + 0.1, day * 0.9 + 0.1, day * 0.85 + 0.15);
 
     float thunder = beta173Thunder();
     if (thunder > 0.0) {
@@ -39,8 +38,10 @@ float beta173CloudFaceShade() {
     vec3 nView = normalize(cross(dFdx(cloudViewPos), dFdy(cloudViewPos)));
     vec3 nWorld = mat3(gbufferModelViewInverse) * nView;
     if (abs(nWorld.y) > 0.5) {
-        float worldY = (gbufferModelViewInverse * vec4(cloudViewPos, 1.0)).y + cameraPosition.y;
-        return worldY > BETA_CLOUD_BASE + 2.0 ? 1.0 : 0.7;
+        // La normal reconstruida por derivadas apunta hacia el lado visible de la cara.
+        // Normal Y positiva: superficie superior clara; negativa: cara inferior sombreada.
+        // No depende de la altura de cámara ni de la altura absoluta del mundo.
+        return nWorld.y > 0.0 ? 1.0 : 0.7;
     }
     return abs(nWorld.x) > abs(nWorld.z) ? 0.9 : 0.8;
 }

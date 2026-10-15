@@ -6,13 +6,38 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código del shaderpack</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/release/v0.8.1-dimension-fog-clouds/Beta173-Lighting">Fuentes asociadas a v0.8.1</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (estable)</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía v0.9.0-pre1</a> ·
   <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
 </p>
 
 ---
+
+## 🧪 v0.9.0-pre1 — campo climático reconstruido desde Beta 1.7.3
+
+**Estado: preversión experimental en las fuentes de la rama principal. La descarga estable sigue siendo v0.8.1.** No hay un ZIP universal v0.9 preparado para instalar: el campo climático depende de la semilla exacta del mundo y debe generarse antes de empaquetar.
+
+Esta iteración aborda la limitación de temperatura mediante la ruta histórica completa, no usando el uniforme moderno de Iris como sustituto:
+
+- Port de la secuencia de `java.util.Random`, los offsets y las permutaciones de las cuatro octavas de `NoiseGeneratorOctaves2`.
+- Port a GLSL del ruido Simplex 2D de `NoiseGenerator2`, con una textura RGBA8 de lookup generada para una semilla concreta.
+- Evaluación en las coordenadas X/Z del jugador, usando los componentes de cámara de Iris para reducir errores de precisión y diferencias entre cámara y posición de los ojos.
+- Conversión HSB basada en `BiomeGenBase.getSkyColorByTemp`, incluyendo la cuantización RGB de 8 bits de Java, antes de conservar la atenuación diurna y meteorológica.
+
+### Cómo construir una versión para tu mundo
+
+1. Entra al mundo y ejecuta `/seed`.
+2. Desde la raíz del repositorio, genera los recursos con la semilla exacta:
+   
+       python3 Beta173-Lighting/tools/generate_climate_seed.py --seed SEMILLA_REAL
+       python3 Beta173-Lighting/tools/build_pack.py 0.9.0-pre1
+
+3. Copia el ZIP generado a la carpeta `shaderpacks` de esa instancia y prueba el cielo a distintas coordenadas y horas.
+
+Reemplaza `SEMILLA_REAL` por el número de `/seed`, incluido el signo menos si lo hay. El ZIP resultante es específico de ese mundo: genera otra vez los recursos al cambiar de semilla. El generador modifica el PNG y `climate_seed.glsl` dentro de las fuentes; no publiques esos archivos personalizados si prefieres mantener privada la semilla de tu mundo.
+
+**Importante:** Iris no expone la semilla del mundo como un uniforme estándar. GLSL usa `float` mientras el código original utilizaba `double`; la reconstrucción matemática no garantiza igualdad bit a bit. Además, la compilación GLSL completa y la comprobación visual en Minecraft siguen pendientes. La preversión no debe tratarse como un release validado.
 
 ## 🌌 ¿Qué es Beta173 Lighting?
 
@@ -38,7 +63,7 @@ El resultado es una reconstrucción progresiva, no una afirmación de equivalenc
 - [Qué proyectos y tecnologías utilizamos](#-qué-proyectos-y-tecnologías-utilizamos)
 - [Cómo trasladamos Beta a un motor moderno](#-cómo-trasladamos-beta-a-un-motor-moderno)
 - [Los sistemas que reconstruimos](#-los-sistemas-que-reconstruimos)
-- [Historia completa: v0.1–v0.8.1](#-historia-completa-v01v081)
+- [Historia completa: v0.1–v0.9.0-pre1](#-historia-completa-v01v081)
 - [Arquitectura del repositorio](#-arquitectura-del-repositorio)
 - [Configuración](#️-configuración)
 - [Instalación](#-instalación)
@@ -227,7 +252,7 @@ La altura merece una distinción especial. En Beta la altura nominal de nubes er
 
 ---
 
-## 🗓️ Historia completa: v0.1–v0.8.1
+## 🗓️ Historia completa: v0.1–v0.9.0-pre1
 
 La numeración registra una evolución por capas. Las versiones menores correctivas son importantes: parte del trabajo no consiste en añadir efectos, sino en descubrir que una etapa moderna aplica una mezcla, un color o una geometría que no coincide con la suposición inicial.
 
@@ -244,6 +269,7 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 | **v0.7.2** | Ciclo de color de nubes | Refina la respuesta de color histórica de las nubes ante día, lluvia y tormenta y restaura la salida RGBA de estrellas observada en la referencia. La geometría y la máscara de las nubes siguen procediendo del motor moderno. |
 | **v0.8** | Estrellas de Beta y paquete reproducible | Genera un mapa de estrellas a partir de la rutina histórica, lo integra en el shader del cielo, refina la cobertura de estrellas y el oscurecimiento nocturno de nubes, implementa el sombreado y color de nube inspirados en Beta e incorpora un empaquetador que resuelve los <code>#include</code>. |
 | **v0.8.1** | Niebla por dimensión y altura de nubes | Separa las rutas de niebla y luz ambiental de Overworld, Nether y End; el End puede usar parámetros de niebla nativos de Iris. Remapea la altura de las nubes a Y=260,99 para el rango moderno. Es una versión de adaptación, aún sujeta a validación visual. |
+| **v0.9.0-pre1** | Reconstrucción del campo climático | Porta la secuencia de Java Random, ruido Simplex de cuatro octavas, lookup de gradientes por semilla y HSB/RGB de 8 bits. Requiere generar recursos para la semilla de cada mundo; el build y la validación visual en Minecraft siguen pendientes. |
 
 ### La evolución en cuatro etapas
 
@@ -255,6 +281,8 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 
 **Etapa IV — diferencias entre dimensiones y altura moderna (v0.8.1).** El foco se desplaza a las propiedades que varían por dimensión y a la altura de las nubes en un mundo con rango vertical moderno. La compatibilidad no se resuelve solo con fórmulas históricas: también requiere utilizar correctamente los parámetros de Iris.
 
+**Etapa V — campo climático dependiente de la semilla (v0.9.0-pre1).** Se reconstruye el ruido espacial que Beta evaluaba con las coordenadas X/Z del jugador. Al no disponer de la semilla original desde un uniforme estándar de Iris, el paquete requiere una generación externa de los datos para el mundo objetivo.
+
 ### Documentos y artefactos de versión
 
 - [Paquete v0.8 en la raíz del repositorio](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.zip)
@@ -263,7 +291,8 @@ La numeración registra una evolución por capas. Las versiones menores correcti
 - [Release v0.7.2](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.2)
 - [Release v0.7.1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7.1)
 - [Release v0.7](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/releases/tag/v0.7)
-- [Fuentes asociadas a los cambios de v0.8.1](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/release/v0.8.1-dimension-fog-clouds/Beta173-Lighting)
+- [Fuentes actualizadas y generador climático v0.9.0-pre1 en main](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting)
+- [Guía de generación por semilla](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md)
 
 ---
 
@@ -402,7 +431,7 @@ Las pruebas de estrellas, nubes y niebla necesitan una última evaluación en el
 - **Propagación de luz:** un shader no reemplaza los algoritmos Java que calculan, propagan y almacenan la iluminación del mundo. La reconstrucción actúa sobre los datos que ya expone el motor moderno.
 - **Lightmap moderno:** las coordenadas del lightmap actual solo pueden convertirse de forma aproximada en los niveles históricos de Beta. La correspondencia no implica que las dos simulaciones de iluminación sean idénticas.
 - **Interpolación temporal:** determinadas funciones históricas recibían fracciones de tick o datos del motor que no siempre están disponibles de la misma forma en el shader.
-- **Temperatura del bioma:** el tono del cielo usa actualmente un valor neutral aproximado en lugar de reconstruir todas las diferencias de temperatura de los biomas.
+- **Campo climático (v0.9.0-pre1):** la fuente ya reconstruye el ruido de cuatro octavas y la conversión HSB de Beta, pero requiere generar la textura y los offsets con la semilla real. Sin personalizar los recursos, mantiene el respaldo neutral. No está validada visualmente; la precisión float de GLSL y el origen de cámara deben comprobarse en juego.
 - **Sol y luna:** el proyecto se centra en el cielo, las estrellas y la niebla; no reconstruye de forma completa la geometría, el movimiento o las fases de los cuerpos celestes históricos.
 - **Geometría de nubes:** las nubes utilizan la geometría del motor moderno; todavía no se ha reproducido íntegramente el sistema de celdas, desplazamiento y múltiples pasadas de Beta.
 - **Altura de nube:** Y=260,99 es una adaptación fija al rango vertical moderno; puede no ser ideal sobre todos los picos.
@@ -422,6 +451,7 @@ Las siguientes líneas representan trabajo potencial, no funciones que deban con
 - Revisar las diferencias entre la geometría de nubes de Beta y la geometría nativa moderna, sin romper la compatibilidad con Iris.
 - Refinar la correspondencia entre los niveles de lightmap modernos y los niveles discretos históricos.
 - Ampliar las comparaciones diferenciales para más fórmulas y condiciones de borde.
+- Validar el campo climático v0.9 con la semilla real en distintos biomas/coordenadas, comparar el color con la referencia Java y comprobar continuidad cuando cambie el origen de cámara.
 - Probar sistemáticamente amanecer, mediodía, atardecer, noche, lluvia, tormenta y niebla en cada dimensión.
 - Documentar por versión las combinaciones de Minecraft, Iris y Sodium en las que se haya probado visualmente el shaderpack.
 - Mantener los perfiles de diagnóstico y el empaquetado reproducible para que futuras correcciones no deshagan las anteriores.

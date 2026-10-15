@@ -89,8 +89,8 @@ class Beta173MathTests(unittest.TestCase):
     def test_shader_keeps_discrete_light_and_historical_fog_constants(self):
         lighting = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
         config = (SHADERS / "lib" / "config.glsl").read_text(encoding="utf-8")
-        self.assertIn("floor(clamp(lm.x, 0.0, 1.0) * 15.0 + 0.5)", lighting)
-        self.assertIn("floor(clamp(lm.y, 0.0, 1.0) * 15.0 + 0.5)", lighting)
+        self.assertIn("block = floor(block + 0.5);", lighting)
+        self.assertIn("sky = floor(sky + 0.5);", lighting)
         self.assertIn("#define BETA_FOG_END 256.0", config)
         self.assertIn("#define BETA_FOG_SKY_BLEND 0.2928932", config)
         self.assertNotIn("BETA_SMOOTH", config)
@@ -99,20 +99,20 @@ class Beta173MathTests(unittest.TestCase):
     def test_world_fog_uses_historical_render_distance(self):
         shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
         config = (SHADERS / "lib" / "config.glsl").read_text(encoding="utf-8")
-        self.assertIn("float fogEnd = BETA_FOG_END;", shader)
-        self.assertIn("float fogStart = isNether ? 0.0 : fogEnd * 0.25;", shader)
+        self.assertIn("float betaFogEnd = BETA_FOG_END;", shader)
+        self.assertIn("float betaFogStart = isNether ? 0.0 : betaFogEnd * 0.25;", shader)
         self.assertIn("#define BETA_RENDER_DISTANCE 0", config)
 
     def test_fog_distinguishes_nether_from_end(self):
         shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
         self.assertIn("bool isNether = !hasSkylight && hasCeiling;", shader)
-        self.assertIn("if (!hasSkylight && !isNether) return color;", shader)
+        self.assertIn("if (!hasSkylight && !hasCeiling) {", shader)
 
     def test_sky_gradient_keeps_historical_fog_distance(self):
         shader = (SHADERS / "lib" / "beta173.glsl").read_text(encoding="utf-8")
         sky_gradient = shader.split("vec3 beta173SkyGradient(float up)", 1)[1]
-        self.assertIn("float fogEnd = BETA_FOG_END;", sky_gradient)
-        self.assertEqual(shader.count("float fogEnd = BETA_FOG_END;"), 2)
+        self.assertIn("float betaFogEnd = BETA_FOG_END;", sky_gradient)
+        self.assertEqual(shader.count("float betaFogEnd = BETA_FOG_END;"), 2)
 
 
 if __name__ == "__main__":

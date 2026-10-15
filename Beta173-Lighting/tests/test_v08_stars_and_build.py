@@ -153,9 +153,9 @@ class ShaderSourceTests(unittest.TestCase):
         self.assertIn("texture.noise=textures/starmap.png", props)
         self.assertTrue((ROOT / "shaders" / "textures" / "starmap.png").is_file())
 
-    def test_cloud_constants_match_beta(self):
+    def test_cloud_constants_keep_beta_shading_with_modern_height(self):
         cfg = (ROOT / "shaders" / "lib" / "config.glsl").read_text(encoding="utf-8")
-        self.assertIn("#define BETA_CLOUD_HEIGHT 108.33", cfg)
+        self.assertIn("#define BETA_CLOUD_HEIGHT 260.99", cfg)
         frag = (ROOT / "shaders" / "gbuffers_clouds.fsh").read_text(encoding="utf-8")
         for shade in ("1.0 : 0.7", "0.9 : 0.8"):
             self.assertIn(shade, frag)

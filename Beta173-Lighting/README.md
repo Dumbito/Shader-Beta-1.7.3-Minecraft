@@ -1,74 +1,53 @@
-# Beta173 Lighting v0.8 — Estrellas y nubes de Beta
+# Beta173 Lighting v0.9.0-pre1 — reconstrucción del campo climático
 
-Shaderpack experimental para Iris que reconstruye iluminación, niebla y cielo de Minecraft Beta 1.7.3.
+Shaderpack experimental para Iris que porta el campo de temperatura espacial utilizado por Minecraft Beta 1.7.3 para calcular el tono del cielo. La descarga estable publicada sigue siendo v0.8.1; esta preversión se construye desde las fuentes y requiere datos generados para la semilla del mundo.
 
-Referencia de ingeniería inversa: [mc_b1.7.3_release](https://github.com/jacobo-mc/mc_b1.7.3_release) (solo como referencia; las fórmulas están portadas, no copiadas).
+## Qué reconstruye
 
-## Cambios de v0.8
+La cadena de referencia es:
 
-- **Sin `#include` en el ZIP.** `tools/build_pack.py` incrusta la biblioteca en cada programa, así que el pack no depende de que Iris resuelva includes.
-- **Estrellas de Beta dibujadas dentro del cielo** (`gbuffers_skybasic.fsh`), sin depender del pase de estrellas del motor, que se descarta. Posiciones, tamaños y rotaciones salen de `RenderGlobal.renderStars()`: `java.util.Random(10842)`, 1500 intentos, **780 estrellas aceptadas**, radio 100, lado de 0.5 a 1.0. `tools/generate_starmap.py` rasteriza esas estrellas en `shaders/textures/starmap.png`. La mezcla es la de Beta: `glColor4f(b, b, b, b)` con `(SRC_ALPHA, ONE)`, es decir, se suma `b * b`.
-- **Nubes con color y sombreado de Beta** (`World.drawClouds` y `renderCloudsFancy`): arriba 1.0, abajo 0.7, caras X 0.9, caras Z 0.8. Ya no se multiplica sobre el color del motor, así que no puede haber oscurecimiento doble. El alfa sigue siendo el del motor porque es la máscara de dónde hay nube.
-- **Nubes a la altura de Beta** (108.33 en vez de 192.33).
-- Modos de diagnóstico ampliados (`BETA_DEBUG` 1 a 4).
+1. World.getSkyColor toma las coordenadas X/Z de la posición del jugador.
+2. WorldChunkManager.getTemperature(x, z) evalúa ruido Simplex 2D generado desde new Random(worldSeed * 9871L), con cuatro octavas.
+3. Cada NoiseGenerator2 consume offsets y genera una permutación desde java.util.Random.
+4. BiomeGenBase.getSkyColorByTemp divide la temperatura por 3, limita el resultado a [-1, 1] y calcula el color HSB: h = 0.62222224 - t * 0.05; s = 0.5 + t * 0.1; b = 1.
+5. El shader conserva la atenuación diurna y los ajustes de lluvia/tormenta ya portados.
 
-**Estado:** el código compila (glslang, 1200 combinaciones de opciones) y las pruebas pasan, pero **nada de esto se ha visto todavía dentro de Minecraft**. Las pruebas no demuestran fidelidad visual.
+La implementación incluye el consumo de Java Random, offsets y permutaciones de cuatro octavas, el ruido Simplex 2D y la cuantización RGB de 8 bits de Java. Como GLSL opera con float y el original utiliza double, no se garantiza igualdad bit a bit. La fidelidad visual sigue pendiente de validar en Minecraft.
 
-## Instalación
+## Construir para una semilla concreta
 
-1. Copia `Beta173-Lighting-0.8.zip` (raíz del repositorio) sin descomprimir en la carpeta `shaderpacks` de tu instancia.
-2. Selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**.
+Iris no expone la semilla del mundo como uniforme estándar. Por eso el shaderpack genérico no puede reconstruir por sí solo la misma permutación para todas las partidas. El generador crea dos recursos específicos:
 
-Para construir el ZIP desde las fuentes:
+- shaders/textures/beta173_climate_gradient.png: lookup de índices de gradiente para las cuatro octavas.
+- shaders/lib/climate_seed.glsl: offsets de octava y marca de configuración.
 
-```bash
-python3 Beta173-Lighting/tools/build_pack.py 0.8
-```
+Entra al mundo, ejecuta /seed y copia el número. Desde la raíz del repositorio, ejecuta:
 
-Para generar un ZIP de diagnóstico sin tocar el código (el ZIP no usa `#include`, así que las opciones van dentro de cada shader):
+    python3 Beta173-Lighting/tools/generate_climate_seed.py --seed SEMILLA_REAL
+    python3 Beta173-Lighting/tools/build_pack.py 0.9.0-pre1
 
-```bash
-python3 Beta173-Lighting/tools/build_pack.py 0.8-debug1 BETA_DEBUG=1
-python3 Beta173-Lighting/tools/build_pack.py 0.8-nubes-motor BETA_CLOUD_COLOR_MODE=1
-python3 Beta173-Lighting/tools/build_pack.py 0.8-sin-estrellas BETA_STAR_FIELD=off
-```
+Sustituye SEMILLA_REAL por el valor real, incluido el signo menos cuando corresponda. El ZIP generado queda personalizado para ese mundo; genera otra vez los recursos para otra semilla. No publiques los archivos generados si prefieres mantener privada la semilla.
 
-## Opciones (`shaders/lib/config.glsl`)
+Si no ejecutas el generador, el shader conserva el valor neutral BETA_SKY_TEMPERATURE 0.5 como respaldo. No hace falta modificar el código Java del juego.
 
-| Opción | Valor | Qué hace |
-|---|---|---|
-| `BETA_STAR_FIELD` | comentar | Vuelve al pase de estrellas del motor |
-| `BETA_CLOUD_COLOR_MODE` | `0` / `1` / `2` | Color de Beta / solo el del motor / v0.7.2 (multiplicar) |
-| `BETA_CLOUD_HEIGHT_FIX` | comentar | Deja las nubes a la altura del juego |
-| `BETA_DEBUG` | `1` | Colorea las etapas del cielo (azul SKY, naranja SUNSET, magenta STARS, verde CUSTOM_SKY, rojo oscuro VOID, amarillo = no reconocida) y pinta las nubes de rojo |
-| `BETA_DEBUG` | `2` | Estrellas de Beta al máximo brillo, incluso de día |
-| `BETA_DEBUG` | `3` | El cielo muestra uniformes: R = lluvia, G = tormenta, B = brillo de estrellas ×2 (blanco = `hasSkylight` no llega) |
-| `BETA_DEBUG` | `4` | Anillo cian donde Beta pone el sol y naranja donde pone la luna |
+Si la cámara se reinicia al desplazarse a distancias muy largas, comprueba la continuidad espacial. El generador acepta los argumentos opcionales --origin-x y --origin-z para ajustar el origen si la instalación concreta de Iris lo requiere. No se deben cambiar sin antes verificar el problema.
 
-## Perfiles de niebla
+## Validación
 
-| `BETA_RENDER_DISTANCE` | Perfil | Distancia final |
-|---:|---|---:|
-| 0 | Far | 256 bloques |
-| 1 | Normal | 128 bloques |
-| 2 | Short | 64 bloques |
-| 3 | Tiny | 32 bloques |
+Ejecuta desde la raíz:
 
-El selector no controla los chunks que carga Minecraft.
+    python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
 
-## Pruebas
+La suite climática cubre la secuencia de Java Random, vectores numéricos de referencia, cuatro permutaciones, variación espacial, la textura PNG, los offsets, la reconstrucción de posición del jugador y la conversión HSB/RGB. Las pruebas automatizadas no demuestran que GLSL compile en todas las configuraciones ni sustituyen una comparación visual dentro de Minecraft.
 
-```bash
-python3 -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v
-```
+## Límites conocidos
 
-Las pruebas automatizadas no sustituyen una prueba visual en Minecraft.
+- La semilla debe proporcionarse manualmente; no se lee automáticamente desde el mundo.
+- La evaluación GLSL no es bit a bit idéntica al cálculo Java de doble precisión.
+- El origen de cámara y la posición del jugador deben comprobarse en distintas distancias y perspectivas.
+- Falta validación visual comparativa del cielo bajo distintos tiempos, biomas y estados meteorológicos.
+- Esta preversión no modifica la geometría de nubes ni la corrección de sombreado de sus caras.
 
-## Limitaciones
+## Descarga estable
 
-- La orientación de las estrellas asume el marco con el que el juego dibuja el sol y la luna (Rx y luego Ry de -90°). Se comprueba con `BETA_DEBUG 4`.
-- Si Iris voltea la textura verticalmente al cargarla, las estrellas quedarían reflejadas respecto al original (mismo aspecto, otra disposición).
-- Las nubes conservan la geometría del motor; no se ha reconstruido el sistema de nubes de Beta (celdas de 12 bloques, desplazamiento, dos pasadas).
-- Sol, luna y fases de la luna siguen siendo los del juego moderno.
-- La temperatura del bioma sigue siendo una aproximación neutral.
-- La propagación de luz y el motor moderno difieren de Beta 1.7.3.
+La versión descargable estable continúa siendo Beta173-Lighting-0.8.1.zip, disponible en el README principal. No existe un ZIP universal v0.9 preconfigurado porque cada compilación experimental depende de la semilla del mundo objetivo.

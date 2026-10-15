@@ -26,7 +26,8 @@
     #error BETA_RENDER_DISTANCE debe ser 0, 1, 2 o 3
 #endif
 
-// Aproximacion neutral: falta recuperar la temperatura real del bioma.
+// Fallback neutral solo mientras no se genere el campo climático para la semilla real.
+// Ejecuta tools/generate_climate_seed.py --seed <valor-de-/seed> para activar el port.
 #define BETA_SKY_TEMPERATURE 0.5
 
 // ---------------------------------------------------------------------------
@@ -51,7 +52,9 @@
 // Comenta BETA_CLOUD_HEIGHT_FIX para dejar las nubes a la altura del juego.
 #define BETA_CLOUD_HEIGHT_FIX
 #define BETA_VANILLA_CLOUD_HEIGHT 192.33
-#define BETA_CLOUD_HEIGHT 108.33
+// Altura moderna: remapea la proporción de Beta (108.33/128)
+// al rango Overworld [-64, 320]: -64 + (108.33/128)*384 ~= 260.99.
+#define BETA_CLOUD_HEIGHT 260.99
 
 #ifdef BETA_CLOUD_HEIGHT_FIX
     #define BETA_CLOUD_BASE BETA_CLOUD_HEIGHT
