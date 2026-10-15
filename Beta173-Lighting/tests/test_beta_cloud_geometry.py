@@ -54,17 +54,19 @@ class BetaCloudGeometryTests(unittest.TestCase):
         fsh = (SHADERS / "gbuffers_clouds.fsh").read_text(encoding="utf-8")
         cfg = (SHADERS / "lib" / "config.glsl").read_text(encoding="utf-8")
         self.assertIn("#define BETA_CUSTOM_CLOUD_GEOMETRY 0 // [0 1]", cfg)
-        self.assertIn("#elif BETA_CUSTOM_CLOUD_GEOMETRY", fsh)
+        self.assertIn("#if BETA_CUSTOM_CLOUD_GEOMETRY", fsh)
         self.assertIn("#if BETA_CUSTOM_CLOUD_GEOMETRY", gsh)
         # Estable por defecto: pasa el mesh original y conserva el alfa del motor.
         self.assertIn("cloudColor = sourceCloudColor[i];", gsh)
         self.assertIn("cloudViewPos = sourceCloudViewPos[i];", gsh)
-        self.assertIn("fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(), cloudColor.a);", fsh)
+        self.assertIn("fragColor = vec4(beta173CloudColor() * beta173CloudFaceShade(),", fsh)
+        self.assertIn("cloudColor.a * cloudVisibility", fsh)
+        self.assertIn("if (cloudVisibility <= 0.001) discard;", fsh)
         for shade in ("1.0", "0.7", "0.9", "0.8"):
             self.assertIn(shade, gsh)
         self.assertIn("ticks * 0.03", gsh)
         self.assertIn("gbufferProjection * viewPosition", gsh)
-        self.assertIn("0.8 * mask.a", fsh)
+        self.assertIn("0.8 * mask.a * cloudVisibility", fsh)
 
     def test_texture_metadata_uses_crisp_wrapped_cloud_mask(self):
         meta = (SHADERS / "textures" / "beta173_clouds.png.mcmeta").read_text(encoding="utf-8")

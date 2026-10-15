@@ -1,21 +1,21 @@
 # Beta173 Lighting
 ### Reconstruyendo la iluminación, el cielo y la atmósfera de Minecraft Beta 1.7.3 en Minecraft moderno
 
-> **v1.0.1 — parche de nubes:** mejora la visibilidad del color de las nubes durante la noche con un mínimo configurable, sin cambiar geometría, altura, máscara alfa ni desplazamiento. Se mantiene como requisito la prueba visual para cualquier desaparición geométrica o fallo de profundidad.
+> **v1.0.2 — horario de nubes:** conserva el color de v1.0.0 y hace que las nubes aparezcan de día, entren gradualmente al amanecer y desaparezcan al anochecer. Durante la noche profunda no se dibujan. El horario se ajusta desde Shader Pack Settings, sin editar GLSL.
 
 <p align="center">
   <strong>Un proyecto de ingeniería inversa visual, traducción matemática y shaders GLSL para Iris; v1.0.0 es la primera versión estable oficial.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.1.zip">Descargar v1.0.1 — parche de nubes</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.2.zip">Descargar v1.0.2 — nubes solo de día</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip">Descargar v1.0.0 estable anterior</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip">Descargar v0.9.0 (versión anterior; prueba visual aprobada)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.8.1.zip">Descargar v0.8.1 (versión anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar">Descargar Climate Bridge 0.1.0 (Fabric 26.3)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0-pre1.zip">Descargar v0.9.0-pre1 (base anterior)</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-v0.9-climate-builder.zip">Kit generador climático por semilla</a> ·
-  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml">Pruebas y publicación de v1.0.0</a> ·
+  <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/actions/workflows/universal-climate.yml">Pruebas y publicación de v1.0.2</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/tree/main/Beta173-Lighting">Código actualizado en main</a> ·
   <a href="https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/blob/main/Beta173-Lighting/README.md">Guía de v1.0.0</a> ·
   <a href="https://github.com/jacobo-mc/mc_b1.7.3_release">Referencia de Minecraft Beta 1.7.3</a>
@@ -23,18 +23,19 @@
 
 ---
 
-## 🩹 v1.0.1 — visibilidad de nubes al anochecer y durante la noche
+## 🌅 v1.0.2 — nubes visibles solo durante el día
 
-**Parche de mantenimiento sobre la versión estable v1.0.0.** Conserva la geometría nativa predeterminada y la malla Beta experimental: no cambia la forma, la altura ni la velocidad de desplazamiento de las nubes.
+Corrección focalizada sobre el parche anterior: el mínimo RGB de v1.0.1 mantenía una nube blanquecina a medianoche. Esta versión elimina ese suelo de brillo y vuelve al color de nube de la versión 1.0.0.
 
-- Añade una rampa configurable para el color RGB nocturno desde **Shader Pack Settings**: el mínimo al atardecer es `0.60` y baja progresivamente hasta `0.12` a medianoche, por defecto entre los ticks `12000` y `18000`.
-- No introduce un cambio brusco en los ticks 12 000 o 13 000: `smoothstep` gradúa la transición. La nube continúa oscureciéndose durante la noche, pero no desaparece por una condición horaria de alfa.
-- La opacidad no se vincula al reloj: el modo estable conserva `cloudColor.a`; la geometría experimental conserva `mask.a`. No se agrega ningún recorte de alfa por hora.
-- Añade pruebas de regresión para ticks críticos (12 000, 13 000, noche profunda, amanecer y retorno a 0) y para la opacidad de ambas rutas.
+- Noche profunda: se descartan los fragmentos de las nubes; no basta con oscurecerlas.
+- Amanecer: aparecen de forma gradual en una transición continua que cruza de los ticks 23999 a 0.
+- Anochecer: empiezan a desaparecer desde el tick 12000 y quedan totalmente ocultas en el tick 13500.
+- Sin tocar el resto: se conservan la geometría nativa predeterminada, la altura, el desplazamiento y el sombreado base de v1.0.0. La geometría Beta custom también respeta el horario.
+- Sin editar código: los ticks de amanecer y anochecer son ajustables desde Shader Pack Settings.
 
-**Alcance del parche:** el código de color no puede demostrar por sí solo que se haya corregido un problema real de profundidad o de emisión de geometría. Si las nubes también desaparecen cuando el color se fuerza visible, hace falta una prueba dentro de Minecraft para aislar renderizado/profundidad; no se declara resuelto un fallo de depth-buffer sin esa comprobación.
+Descarga: Beta173-Lighting v1.0.2 (.zip). Instálalo sin descomprimir en la carpeta shaderpacks.
 
-**Instalación:** descarga el ZIP v1.0.1, cópialo sin descomprimir a `shaderpacks` y selecciónalo en Shader Packs. No hace falta editar archivos GLSL.
+La prueba automatizada verifica la curva de horario, el recorte nocturno y las transiciones. La prueba visual en la instancia real sigue siendo necesaria para confirmar el blending exacto de Iris/Sodium.
 
 ---
 

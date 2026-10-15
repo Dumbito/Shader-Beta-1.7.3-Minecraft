@@ -1,8 +1,8 @@
-# Beta173 Lighting v1.0.1 — parche de mantenimiento para nubes
+# Beta173 Lighting v1.0.2 — nubes visibles solo durante el día
 
 > **Perfil estable v1.0.0:** la geometría nativa de Minecraft se conserva por defecto para maximizar la compatibilidad con Iris/Sodium. La geometría de nubes Beta personalizada queda como opción experimental, activable desde Shader Pack Settings. El paquete incluye una matriz diferencial contra una referencia Java de Beta 1.7.3; la suite valida fórmulas y paquete, pero no simula todas las rutas del renderer.
 
-Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 sigue siendo la base estable; v1.0.1 es el parche de mantenimiento centrado en la visibilidad nocturna de las nubes.**
+Shaderpack para Iris que reconstruye partes del sistema de iluminación, el campo climático, el cielo, la niebla y las nubes de Minecraft Beta 1.7.3. El ZIP universal funciona sin editar GLSL ni introducir la semilla manualmente; el Climate Bridge opcional aporta el campo climático seed-based cuando el entorno permite acceder a la semilla real. **v1.0.0 sigue siendo la base visual estable; v1.0.2 corrige el horario de las nubes para que no se dibujen de noche.**
 
 ## Objetivo: un ZIP que funcione automáticamente en cualquier mundo
 
@@ -18,7 +18,7 @@ La ruta heredada de ZIP específico por semilla sigue disponible para mundos don
 
 ## Descargas oficiales
 
-- [**ZIP oficial v1.0.1 — parche de visibilidad nocturna de nubes, instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.1.zip): mantiene geometría/altura; incorpora una rampa RGB configurable desde el atardecer hasta la noche, sin alterar el alfa.
+- [**ZIP v1.0.2 — horario diurno de nubes, instalable sin editar código**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.2.zip): conserva el color base de v1.0.0; oculta las nubes durante la noche y las introduce/desvanece gradualmente al amanecer/anochecer. Los horarios se ajustan desde Shader Pack Settings.
 - [**ZIP v1.0.0 — primera versión estable anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.0.zip): clima universal con fallback automático; la geometría nativa de nubes es predeterminada y la malla Beta custom queda como opción experimental.
 - [**ZIP universal v0.9.0 — versión oficial anterior**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-0.9.0.zip): fallback por temperatura del bioma si el bridge no está activo; sin el bridge, no simula el ruido espacial histórico de Beta.
 - [**Beta173 Climate Bridge 0.1.0 — Fabric 26.3 (opcional)**](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Climate-Bridge-0.1.0-mc26.3.jar): port del ruido histórico mediante el uniforme `temperature` de Iris.
@@ -94,17 +94,26 @@ Instala el ZIP resultante, sin descomprimir, en `shaderpacks` de la instancia qu
 
 La prueba visual manual de v0.9.0 fue completada y aprobada por el autor. La matriz diferencial se amplía ahora en v1.0.0; la aprobación visual histórica de v0.9.0 no debe interpretarse como certificación visual de todas las combinaciones de la versión nueva.
 
-## Parche v1.0.1 — nubes visibles durante la noche
+## Parche v1.0.2 — nubes visibles solo durante el día
 
-El parche conserva la forma y la altura de nubes de v1.0.0. Incorpora una rampa para el **color RGB** configurable en Shader Pack Settings: por defecto empieza en el tick `12000` con un mínimo RGB de `0.60` y baja progresivamente hasta el valor nocturno `0.12` en el tick `18000`. Los ticks de inicio/fin y ambos niveles se pueden ajustar en el menú, sin editar archivos.
+Este parche parte del aspecto de nubes de v1.0.0 y corrige únicamente el horario de aparición. No aplica un mínimo RGB nocturno: eso dejaba las nubes blanquecinas y visibles a medianoche.
 
-El modo estable preserva `cloudColor.a` del mesh nativo. La geometría Beta experimental conserva `mask.a` de la textura de nubes. Las pruebas comprueban la continuidad de la curva en anochecer, noche y amanecer; no sustituyen la comprobación visual de clipping/profundidad con Iris y Sodium.
+- Durante la noche profunda, el shader descarta por completo los fragmentos de nube.
+- Al amanecer, las nubes aparecen mediante una rampa suave que cruza correctamente el reinicio de la hora de 23999 a 0.
+- Al anochecer, desaparecen de forma gradual; el ciclo termina con las nubes ocultas durante la noche.
+- El color vuelve a usar la función diurna de v1.0.0; la visibilidad horaria afecta también al alfa y a la malla experimental.
+- No cambia altura, geometría, textura/máscara, desplazamiento ni el perfil base de sombreado.
 
-### Instalación del parche
+### Ajustes sin editar GLSL
 
-Descarga [`Beta173-Lighting-1.0.1.zip`](https://github.com/Dumbito/Shader-Beta-1.7.3-Minecraft/raw/refs/heads/main/Beta173-Lighting-1.0.1.zip), cópialo sin descomprimir a `shaderpacks` y selecciónalo en **Opciones → Ajustes de vídeo → Shader Packs**. No necesitas editar código. La rampa de atardecer, sus ticks de inicio/fin y el nivel nocturno se ajustan desde Shader Pack Settings.
+En Shader Pack Settings puedes ajustar los ticks de inicio y final del amanecer y del anochecer. Los valores predeterminados son amanecer 22000 → 1000 (cruza el tick 24000) y anochecer 12000 → 13500. Para mantener el comportamiento estándar, deja esos valores predeterminados.
 
-**Nota técnica:** si las nubes siguen desapareciendo por completo cuando el color sigue visible, eso apunta a geometría, culling o profundidad y requiere una captura/prueba dentro del juego; no se puede atribuir ni declarar arreglado como error de depth-buffer solo con las pruebas de color.
+### Instalación
+
+Descarga Beta173-Lighting-1.0.2.zip, cópialo sin descomprimir a shaderpacks y selecciónalo en Opciones → Ajustes de vídeo → Shader Packs. No necesitas editar líneas de código ni generar una variante por semilla.
+
+Validación: las pruebas automatizadas comprueban la curva de visibilidad, la desaparición a medianoche, la continuidad del amanecer/anochecer y que todos los modos de nubes respetan el horario. La confirmación final de transparencia/blending debe hacerse dentro de Minecraft con tu combinación de Iris/Sodium.
+
 
 ## Versión base v1.0.0
 
