@@ -1,0 +1,37 @@
+name: v0.9 climate regression tests
+
+on:
+  push:
+    branches:
+      - main
+      - feature/v0.9-exact-climate-noise
+    paths:
+      - "Beta173-Lighting/**"
+      - ".github/workflows/test-v09-climate.yml"
+  pull_request:
+    paths:
+      - "Beta173-Lighting/**"
+      - ".github/workflows/test-v09-climate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pip numpy
+
+      - name: Run regression tests
+        run: python -m unittest discover -s Beta173-Lighting/tests -p 'test_*.py' -v

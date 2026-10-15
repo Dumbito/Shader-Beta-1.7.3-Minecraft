@@ -111,6 +111,8 @@ vec3 beta173Hsb(float h, float s, float b) {
 // En el pase del cielo se calcula en el vertex shader y se interpola como flat para no
 // recalcular el ruido cuatro-octavas en cada fragmento de pantalla.
 float beta173SkyClimateTemperature() {
+    // En Nether y End el cielo de Beta no utiliza este campo climático del Overworld.
+    if (!hasSkylight) return BETA_SKY_TEMPERATURE;
 #if BETA_CLIMATE_SEED_CONFIGURED
 #ifdef BETA_CLIMATE_USE_VARYING
     return beta173ClimateTemperatureVarying;
