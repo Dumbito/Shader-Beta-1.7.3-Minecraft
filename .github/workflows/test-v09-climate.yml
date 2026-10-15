@@ -1,10 +1,11 @@
-name: v0.9 climate regression tests
+name: v1.0 Java differential and climate regression tests
 
 on:
   push:
     branches:
       - main
       - feature/v0.9-exact-climate-noise
+      - release/v1.0-java-differential
     paths:
       - "Beta173-Lighting/**"
       - ".github/workflows/test-v09-climate.yml"
@@ -28,6 +29,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Set up Java 25 for executable differential reference
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
 
       - name: Install test dependency
         run: python -m pip install --upgrade pip numpy
